@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FACTORY_CORE_v1.0 - System Audit Logs</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-container": "#fff6f0",
+                        "tertiary-fixed": "#ff9289",
+                        "tertiary-container": "#fe4e49",
+                        "on-surface": "#ffffff",
+                        "surface-tint": "#8bacff",
+                        "inverse-on-surface": "#565555",
+                        "on-tertiary": "#4a0004",
+                        "primary-dim": "#036cfb",
+                        "on-primary": "#002a6c",
+                        "on-primary-fixed": "#000000",
+                        "surface-dim": "#0e0e0e",
+                        "secondary-fixed-dim": "#ffb55b",
+                        "outline-variant": "#484847",
+                        "on-error-container": "#ffa8a3",
+                        "secondary": "#fc9e00",
+                        "inverse-primary": "#0057cf",
+                        "surface-container-high": "#20201f",
+                        "surface-container-low": "#131313",
+                        "primary-fixed": "#759eff",
+                        "on-primary-container": "#001f55",
+                        "on-secondary-fixed": "#4d2d00",
+                        "surface-bright": "#2c2c2c",
+                        "secondary-dim": "#e99200",
+                        "on-secondary-fixed-variant": "#744600",
+                        "tertiary-dim": "#ff7168",
+                        "surface-variant": "#262626",
+                        "error-container": "#9f0519",
+                        "primary-container": "#759eff",
+                        "error": "#ff716c",
+                        "surface-container-highest": "#262626",
+                        "on-surface-variant": "#adaaaa",
+                        "on-secondary": "#4b2c00",
+                        "surface-container-lowest": "#000000",
+                        "background": "#0e0e0e",
+                        "surface": "#0e0e0e",
+                        "tertiary-fixed-dim": "#ff7b71",
+                        "on-error": "#490006",
+                        "secondary-container": "#875200",
+                        "secondary-fixed": "#ffc789",
+                        "on-tertiary-fixed": "#3a0002",
+                        "error-dim": "#d7383b",
+                        "on-tertiary-container": "#1f0001",
+                        "surface-container": "#1a1a1a",
+                        "outline": "#767575",
+                        "on-background": "#ffffff",
+                        "inverse-surface": "#fcf9f8",
+                        "primary-fixed-dim": "#5d8fff",
+                        "primary": "#8bacff",
+                        "on-primary-fixed-variant": "#002868",
+                        "tertiary": "#ff7168",
+                        "on-tertiary-fixed-variant": "#7a000b"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #0e0e0e; color: #ffffff; }
+        .font-space { font-family: 'Space Grotesk', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #0e0e0e; }
+        ::-webkit-scrollbar-thumb { background: #484847; }
+        .metallic-cta {
+            background: linear-gradient(135deg, #8bacff 0%, #759eff 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex">
+<!-- SIDE NAV BAR -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-40 bg-[#0e0e0e] flex flex-col py-6 border-r-0 font-['Space_Grotesk'] tracking-tight text-sm uppercase">
+<div class="px-6 mb-10">
+<h1 class="text-xl font-bold tracking-tighter text-[#8bacff]">TITANIUM FORGE</h1>
+<p class="font-['Inter'] font-medium text-[10px] tracking-widest uppercase opacity-60 text-zinc-400">v4.2.0-STABLE</p>
+</div>
+<nav class="flex-grow flex flex-col bg-[#131313] shadow-none">
+<!-- Dashboard -->
+<a class="text-gray-500 hover:text-gray-300 px-4 py-3 flex items-center gap-3 transition-colors duration-100 hover:bg-[#131313] hover:text-[#8bacff]" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<!-- Logs (Active) -->
+<a class="bg-[#20201f] text-[#8bacff] border-l-2 border-[#8bacff] px-4 py-3 flex items-center gap-3 transition-none" href="#">
+<span class="material-symbols-outlined">list_alt</span>
+                Logs
+            </a>
+<!-- Doc Upload -->
+<a class="text-gray-500 hover:text-gray-300 px-4 py-3 flex items-center gap-3 transition-colors duration-100 hover:bg-[#131313] hover:text-[#8bacff]" href="#">
+<span class="material-symbols-outlined">cloud_upload</span>
+                Doc Upload
+            </a>
+</nav>
+<div class="px-6 mt-auto flex flex-col gap-4">
+<button class="w-full bg-error-container text-on-surface py-3 font-space font-bold text-xs tracking-widest uppercase transition-opacity active:opacity-80 scale-100 active:bg-[#20201f]">
+                EMERGENCY_STOP
+            </button>
+<div class="flex flex-col gap-1 pt-4 border-t border-outline-variant/20">
+<a class="text-gray-500 hover:text-gray-300 px-4 py-2 flex items-center gap-3 transition-colors duration-100 text-xs" href="#">
+<span class="material-symbols-outlined text-sm">settings</span>
+                    Settings
+                </a>
+<a class="text-gray-500 hover:text-gray-300 px-4 py-2 flex items-center gap-3 transition-colors duration-100 text-xs" href="#">
+<span class="material-symbols-outlined text-sm">help_outline</span>
+                    Support
+                </a>
+</div>
+</div>
+</aside>
+<!-- MAIN CONTENT -->
+<main class="ml-64 flex-grow flex flex-col min-h-screen">
+<!-- TOP APP BAR -->
+<header class="bg-[#0e0e0e] flex justify-end items-center w-full px-6 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-6">
+<span class="material-symbols-outlined text-[#8bacff] cursor-pointer hover:bg-[#20201f] p-1 transition-colors">account_circle</span>
+</div>
+</header>
+<!-- PAGE CONTENT -->
+<div class="p-8 flex flex-col gap-8 flex-grow">
+<!-- HEADER SECTION -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h2 class="font-headline text-4xl font-bold tracking-tighter uppercase mb-1">System Audit Logs</h2>
+</div>
+</section>
+<!-- FILTERS GRID -->
+<section class="bg-surface-container-low p-6 flex flex-wrap gap-6 items-end">
+<div class="flex flex-col gap-2 min-w-[200px]">
+<label class="font-label text-[10px] tracking-widest uppercase text-on-surface-variant">Process Range</label>
+<select class="bg-surface-container-highest border-none text-on-surface font-body text-sm py-2 px-3 focus:ring-2 focus:ring-primary outline-none appearance-none cursor-pointer">
+<option>ALL_PROCESSES</option>
+<option>ASSEMBLY_LINE_A</option>
+<option>FABRICATION_04</option>
+<option>QUALITY_CONTROL_Z</option>
+</select>
+</div>
+<div class="flex flex-col gap-2 min-w-[200px]">
+<label class="font-label text-[10px] tracking-widest uppercase text-on-surface-variant">Station ID</label>
+<input class="bg-surface-container-highest border-none text-on-surface font-body text-sm py-2 px-3 focus:ring-2 focus:ring-primary outline-none" placeholder="STN_XXXX" type="text"/>
+</div>
+<div class="flex flex-col gap-2 min-w-[200px]">
+<label class="font-label text-[10px] tracking-widest uppercase text-on-surface-variant">Event Severity</label>
+<div class="flex gap-2">
+<button class="bg-surface-container-highest px-3 py-2 text-xs font-label uppercase text-on-surface-variant hover:bg-surface-bright transition-colors border-b-2 border-transparent focus:border-primary focus:text-primary">Info</button>
+<button class="bg-surface-container-highest px-3 py-2 text-xs font-label uppercase text-on-surface-variant hover:bg-surface-bright transition-colors border-b-2 border-transparent focus:border-secondary focus:text-secondary">Warn</button>
+<button class="bg-surface-container-highest px-3 py-2 text-xs font-label uppercase text-on-surface-variant hover:bg-surface-bright transition-colors border-b-2 border-transparent focus:border-tertiary focus:text-tertiary">Critical</button>
+</div>
+</div>
+<button class="bg-surface-bright px-6 py-2 h-[38px] font-label text-[10px] tracking-widest uppercase text-[#8bacff] hover:opacity-80 transition-opacity ml-auto">
+                    Reset Filters
+                </button>
+</section>
+<!-- MAIN DATA TABLE -->
+<section class="bg-surface-container-low flex-grow flex flex-col overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-highest">
+<th class="px-6 py-4 font-label text-[10px] tracking-widest uppercase text-on-surface-variant">Timestamp</th>
+<th class="px-6 py-4 font-label text-[10px] tracking-widest uppercase text-on-surface-variant">Station</th>
+<th class="px-6 py-4 font-label text-[10px] tracking-widest uppercase text-on-surface-variant">Event Type</th>
+<th class="px-6 py-4 font-label text-[10px] tracking-widest uppercase text-on-surface-variant">User / Entity</th>
+<th class="px-6 py-4 font-label text-[10px] tracking-widest uppercase text-on-surface-variant">Action Taken</th>
+<th class="px-6 py-4 font-label text-[10px] tracking-widest uppercase text-on-surface-variant">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-transparent">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-space text-sm text-[#8bacff]">2023-10-24 14:22:01.034</td>
+<td class="px-6 py-4 font-body text-sm">STN_A_004</td>
+<td class="px-6 py-4">
+<span class="bg-tertiary-container/20 text-tertiary px-2 py-0.5 font-label text-[10px] uppercase">Emergency_Override</span>
+</td>
+<td class="px-6 py-4 font-body text-sm text-on-surface-variant">System.Kernel.Auto</td>
+<td class="px-6 py-4 font-body text-sm italic">Pressure stabilization sequence active</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-primary"></span>
+<span class="font-label text-[10px] uppercase">Executing</span>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-space text-sm text-[#8bacff]">2023-10-24 14:18:45.912</td>
+<td class="px-6 py-4 font-body text-sm">STN_B_012</td>
+<td class="px-6 py-4">
+<span class="bg-secondary-container/20 text-secondary px-2 py-0.5 font-label text-[10px] uppercase">Calibration_Shift</span>
+</td>
+<td class="px-6 py-4 font-body text-sm text-on-surface-variant">Admin_U_882</td>
+<td class="px-6 py-4 font-body text-sm italic">Manual focal adjustment requested</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-secondary"></span>
+<span class="font-label text-[10px] uppercase">Pending</span>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-space text-sm text-[#8bacff]">2023-10-24 14:15:22.110</td>
+<td class="px-6 py-4 font-body text-sm">GATE_01_AUTH</td>
+<td class="px-6 py-4">
+<span class="bg-surface-container-highest text-on-surface px-2 py-0.5 font-label text-[10px] uppercase">Access_Granted</span>
+</td>
+<td class="px-6 py-4 font-body text-sm text-on-surface-variant">Maint_Tech_A</td>
+<td class="px-6 py-4 font-body text-sm italic">Physical entrance secure</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-zinc-500"></span>
+<span class="font-label text-[10px] uppercase">Resolved</span>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-space text-sm text-[#8bacff]">2023-10-24 14:12:01.002</td>
+<td class="px-6 py-4 font-body text-sm">SERVER_ROOM_A</td>
+<td class="px-6 py-4">
+<span class="bg-error-container/20 text-error px-2 py-0.5 font-label text-[10px] uppercase">Intrusion_Alert</span>
+</td>
+<td class="px-6 py-4 font-body text-sm text-on-surface-variant">Unknown_Proxy</td>
+<td class="px-6 py-4 font-body text-sm italic">IP lockout sequence initiated</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-tertiary"></span>
+<span class="font-label text-[10px] uppercase">Locked</span>
+</div>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-space text-sm text-[#8bacff]">2023-10-24 14:05:44.821</td>
+<td class="px-6 py-4 font-body text-sm">STN_A_009</td>
+<td class="px-6 py-4">
+<span class="bg-surface-container-highest text-on-surface px-2 py-0.5 font-label text-[10px] uppercase">Routine_Check</span>
+</td>
+<td class="px-6 py-4 font-body text-sm text-on-surface-variant">System.Cron</td>
+<td class="px-6 py-4 font-body text-sm italic">Standard diagnostic payload complete</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-zinc-500"></span>
+<span class="font-label text-[10px] uppercase">Complete</span>
+</div>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-space text-sm text-[#8bacff]">2023-10-24 13:58:12.441</td>
+<td class="px-6 py-4 font-body text-sm">STN_C_112</td>
+<td class="px-6 py-4">
+<span class="bg-secondary-container/20 text-secondary px-2 py-0.5 font-label text-[10px] uppercase">Coolant_Level_Low</span>
+</td>
+<td class="px-6 py-4 font-body text-sm text-on-surface-variant">Sensor.H2O_01</td>
+<td class="px-6 py-4 font-body text-sm italic">Refill cycle scheduled</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-secondary"></span>
+<span class="font-label text-[10px] uppercase">Pending</span>
+</div>
+</td>
+</tr>
+<!-- Row 7 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-space text-sm text-[#8bacff]">2023-10-24 13:45:00.000</td>
+<td class="px-6 py-4 font-body text-sm">STN_A_005</td>
+<td class="px-6 py-4">
+<span class="bg-surface-container-highest text-on-surface px-2 py-0.5 font-label text-[10px] uppercase">Sensor_Sync</span>
+</td>
+<td class="px-6 py-4 font-body text-sm text-on-surface-variant">System.Cron</td>
+<td class="px-6 py-4 font-body text-sm italic">All telemetry aligned</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-zinc-500"></span>
+<span class="font-label text-[10px] uppercase">Complete</span>
+</div>
+</td>
+</tr>
+<!-- Row 8 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-space text-sm text-[#8bacff]">2023-10-24 13:32:15.882</td>
+<td class="px-6 py-4 font-body text-sm">PWR_GRID_02</td>
+<td class="px-6 py-4">
+<span class="bg-tertiary-container/20 text-tertiary px-2 py-0.5 font-label text-[10px] uppercase">Power_Cycle</span>
+</td>
+<td class="px-6 py-4 font-body text-sm text-on-surface-variant">Admin_J_404</td>
+<td class="px-6 py-4 font-body text-sm italic">Hard reboot of auxiliary systems</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-primary"></span>
+<span class="font-label text-[10px] uppercase">Executing</span>
+</div>
+</td>
+</tr>
+<!-- Row 9 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-space text-sm text-[#8bacff]">2023-10-24 13:12:44.201</td>
+<td class="px-6 py-4 font-body text-sm">STN_D_099</td>
+<td class="px-6 py-4">
+<span class="bg-surface-container-highest text-on-surface px-2 py-0.5 font-label text-[10px] uppercase">Update_Applied</span>
+</td>
+<td class="px-6 py-4 font-body text-sm text-on-surface-variant">Maint_Tech_B</td>
+<td class="px-6 py-4 font-body text-sm italic">Firmware version 2.4.1 stable</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-zinc-500"></span>
+<span class="font-label text-[10px] uppercase">Resolved</span>
+</div>
+</td>
+</tr>
+<!-- Row 10 -->
+<tr class="hover:bg-surface-bright transition-colors">
+<td class="px-6 py-4 font-space text-sm text-[#8bacff]">2023-10-24 12:55:01.011</td>
+<td class="px-6 py-4 font-body text-sm">STN_B_001</td>
+<td class="px-6 py-4">
+<span class="bg-error-container/20 text-error px-2 py-0.5 font-label text-[10px] uppercase">Motor_Jam</span>
+</td>
+<td class="px-6 py-4 font-body text-sm text-on-surface-variant">Auto.Observer</td>
+<td class="px-6 py-4 font-body text-sm italic">Emergency halt triggered</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-tertiary"></span>
+<span class="font-label text-[10px] uppercase">Locked</span>
+</div>
+</td>
+</tr></tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- FOOTER STATUS BAR -->
+</main>
+<!-- FAB -->
+</body></html>

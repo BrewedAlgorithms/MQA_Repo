@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TITANIUM FORGE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#8bacff",
+              "error-dim": "#d7383b",
+              "on-tertiary-fixed": "#3a0002",
+              "primary-fixed-dim": "#5d8fff",
+              "surface-variant": "#262626",
+              "on-tertiary": "#4a0004",
+              "inverse-primary": "#0057cf",
+              "outline": "#767575",
+              "on-secondary": "#4b2c00",
+              "background": "#0e0e0e",
+              "tertiary": "#ff7168",
+              "secondary-fixed": "#ffc789",
+              "tertiary-container": "#fe4e49",
+              "tertiary-dim": "#ff7168",
+              "primary-container": "#759eff",
+              "on-error": "#490006",
+              "error-container": "#9f0519",
+              "tertiary-fixed-dim": "#ff7b71",
+              "surface-container-lowest": "#000000",
+              "on-error-container": "#ffa8a3",
+              "on-primary-container": "#001f55",
+              "secondary-fixed-dim": "#ffb55b",
+              "on-surface-variant": "#adaaaa",
+              "on-primary-fixed-variant": "#002868",
+              "secondary": "#fc9e00",
+              "on-secondary-fixed": "#4d2d00",
+              "secondary-dim": "#e99200",
+              "surface-tint": "#8bacff",
+              "surface-container-high": "#20201f",
+              "primary-fixed": "#759eff",
+              "on-primary-fixed": "#000000",
+              "on-tertiary-fixed-variant": "#7a000b",
+              "secondary-container": "#875200",
+              "inverse-on-surface": "#565555",
+              "outline-variant": "#484847",
+              "error": "#ff716c",
+              "on-background": "#ffffff",
+              "on-surface": "#ffffff",
+              "on-secondary-container": "#fff6f0",
+              "on-primary": "#002a6c",
+              "on-tertiary-container": "#1f0001",
+              "inverse-surface": "#fcf9f8",
+              "surface-bright": "#2c2c2c",
+              "surface": "#0e0e0e",
+              "surface-dim": "#0e0e0e",
+              "surface-container-highest": "#262626",
+              "surface-container-low": "#131313",
+              "on-secondary-fixed-variant": "#744600",
+              "surface-container": "#1a1a1a",
+              "tertiary-fixed": "#ff9289",
+              "primary-dim": "#036cfb"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Inter"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0e0e0e;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scanline {
+            background: linear-gradient(to bottom, transparent 50%, rgba(139, 172, 255, 0.05) 50%);
+            background-size: 100% 4px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background">
+<!-- SideNavBar Component -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r-0 bg-[#0e0e0e] flex flex-col h-full z-50">
+<div class="p-6">
+<h1 class="text-xl font-bold text-[#8bacff] tracking-widest font-['Space_Grotesk'] uppercase">TITANIUM FORGE</h1>
+<p class="text-[10px] text-gray-500 font-['Space_Grotesk'] tracking-[0.2em] mt-1">INDUSTRIAL ADM-VX1</p>
+</div>
+<nav class="flex-1 mt-4">
+<!-- Active Tab: Dashboard -->
+<a class="flex items-center px-6 py-4 text-[#8bacff] bg-[#131313] border-l-2 border-[#8bacff] font-['Space_Grotesk'] tracking-tight uppercase transition-colors duration-200 ease-in-out active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="dashboard">dashboard</span>
+<span class="text-sm font-bold">Dashboard</span>
+</a>
+<!-- Inactive Tab: Logs -->
+<a class="flex items-center px-6 py-4 text-gray-500 hover:text-[#8bacff] hover:bg-[#131313] font-['Space_Grotesk'] tracking-tight uppercase transition-colors duration-200 ease-in-out active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="database">database</span>
+<span class="text-sm font-bold">Logs</span>
+</a>
+<!-- Inactive Tab: Doc Upload -->
+<a class="flex items-center px-6 py-4 text-gray-500 hover:text-[#8bacff] hover:bg-[#131313] font-['Space_Grotesk'] tracking-tight uppercase transition-colors duration-200 ease-in-out active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="upload_file">upload_file</span>
+<span class="text-sm font-bold">Doc Upload</span>
+</a>
+</nav>
+<div class="p-6 border-t border-[#ffffff10]">
+<div class="flex items-center space-x-3">
+<div class="w-2 h-2 bg-primary animate-pulse"></div>
+<span class="text-[10px] font-mono text-primary/70 uppercase">System: Online</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-6 min-h-screen space-y-6">
+<!-- Dashboard Header -->
+<div class="flex justify-between items-start mb-4">
+<div class="pt-2">
+</div>
+<div class="flex items-center space-x-6">
+<div class="px-4 py-2 bg-surface-container-high border border-outline-variant text-[10px] font-bold uppercase tracking-widest flex items-center">
+<span class="w-1.5 h-1.5 bg-secondary mr-2"></span>
+                    Alert: Latency Spike
+                </div>
+<div class="flex items-center space-x-3">
+<div class="text-right">
+<p class="text-[10px] font-bold text-white uppercase leading-none">Admin User</p>
+<p class="text-[8px] text-primary uppercase tracking-widest mt-1">Level 4 Access</p>
+</div>
+<img alt="Admin User Profile" class="w-8 h-8 grayscale contrast-125 border border-primary/30" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKT1LO031aFFyZhZY5sxOlT4aZnHiiTxv35Y4En4VR6D-w8jmA6_4RtNcEexZmr_VP6_ax2PFxv3biqX2YVBFPS7wSF-Rn0DHfIyfLwKTuzk62W5sVbUwuGxxkFENkTJH6N8GnCEj5dWsQutwIfy3Yuee91nphrgL11yUKfoMENcGpV4u_tbuRTEj3aHJbej-GoKOqCUYR2RWoj5ytoSlN79l_R4N6826Es-Po4Ws0EJwpj75CSjO2Y-yFdOBOOM7XkjeEqMZ7Hgg"/>
+</div>
+</div>
+</div>
+<!-- Camera Grid 2x2 -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Station A -->
+<div class="bg-surface-container-low p-[1px]">
+<div class="relative aspect-video overflow-hidden bg-black group">
+<img class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-700" data-alt="Close-up of a high-precision robotic arm welding a metal chassis in a dark industrial factory setting with blue sparks and laser guides" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6vCaeZkt8egMYuotXeg9qEmQWL1ayYzSSnz13IuNne8OYOVfBESP7x9jKPoT_ChT_fEnhUeEbjOf6YKZdMUy_F6hS_o7UFlkMF_9gFx0yB2UoSI-dSU0onURfp3_vGG4qBn6ZfeQ63BBJ9tETL5fAy1uJizIde5xgCS1LpVs81Mh-AMEHc-D6rDeJvpTxuJZocY7BfukPGX9ng1mhxYgTK5ABT51xWXvnHFromxofiLKFqQ7hUgXiQ4JTEUrVxJoIpUfLHni4ezM"/>
+<div class="absolute inset-0 scanline pointer-events-none opacity-20"></div>
+<div class="absolute top-4 left-4 flex items-center space-x-2 bg-black/60 px-2 py-1">
+<span class="w-2 h-2 bg-primary animate-pulse"></span>
+<span class="font-label text-[10px] font-bold tracking-widest text-white">LIVE: STATION A</span>
+</div>
+<div class="absolute top-4 right-4 text-[10px] font-mono text-primary/80">CAM_VX_01</div>
+</div>
+<div class="bg-surface-container-high p-4 flex flex-col space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label text-[10px] font-bold text-gray-400 uppercase tracking-widest">Step 05: Grommet Installation</span>
+</div>
+<div class="flex items-center justify-between text-[10px] uppercase font-mono border-t border-white/5 pt-3">
+<span class="text-gray-500">Technician: <span class="text-white">ID_921</span></span>
+<span class="text-primary-container">In Progress</span>
+</div>
+</div>
+</div>
+<!-- Station B -->
+<div class="bg-surface-container-low p-[1px]">
+<div class="relative aspect-video overflow-hidden bg-black group">
+<img class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-700" data-alt="Industrial computer vision display showing wireframe overlays on an automotive engine component with green bounding boxes and technical data" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6YLL6OLwuk9Kj2valiWtB9xqoqNTlxDe3qpHIFnqbZL-_gP0tM1s9hzqGz1elPs8zd5j_BsR_cI2GbDZUwmAkMfQp27LcTJEnTl54P03_1USNCBfx-ALaOLZiW2XFg6mqbzKEs04N1npFofynmxIQG9hvBG1uw9e_b8N_skYUqZVX_7nKMUEI7oVU3oPrhDAiCGKjI8_fWRbxCLy4R7iT06yrpWYKx9ZUei1d0Y0bdEag1RHhoFH4rMi-z-lnfw2NCl2OWZtOtLo"/>
+<div class="absolute inset-0 scanline pointer-events-none opacity-20"></div>
+<div class="absolute top-4 left-4 flex items-center space-x-2 bg-black/60 px-2 py-1">
+<span class="w-2 h-2 bg-secondary animate-pulse"></span>
+<span class="font-label text-[10px] font-bold tracking-widest text-white">LIVE: STATION B</span>
+</div>
+<div class="absolute top-4 right-4 text-[10px] font-mono text-secondary/80">CAM_VX_02</div>
+</div>
+<div class="bg-surface-container-high p-4 flex flex-col space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label text-[10px] font-bold text-gray-400 uppercase tracking-widest">Step 12: Thermal Shielding</span>
+</div>
+<div class="flex items-center justify-between text-[10px] uppercase font-mono border-t border-white/5 pt-3">
+<span class="text-gray-500">Technician: <span class="text-white">ID_104</span></span>
+<span class="text-secondary-dim italic">Awaiting QC</span>
+</div>
+</div>
+</div>
+<!-- Station C -->
+<div class="bg-surface-container-low p-[1px]">
+<div class="relative aspect-video overflow-hidden bg-black group">
+<img class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-700" data-alt="POV of a heavy industrial milling machine carving into a slab of titanium with coolant spray and dark metal textures" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB43ArpQdomn0_Q5ZgaoTtaah6uPcWgOGzUsAYTkHWhr8JQYCPES_4dEnEOx84LQoRyd7-Dji5C7e06141_luU8kyFRlC9t64VrObPZklE_zMDsixTF_LPNhfmxNrKemQ7n1WiLhBHZc7xnHJbT-jgNR__InJ6HMiXDguGFJkhBFwA5sk_Q_S4pwQbZVPm2saglksu_M7Fh__2Ip6XrZDC6Zv6ZRQkxrQ6TYRAQ2WTJprLjfjzc7LyfpqcBVUDtEgZ8i_vGQrG3RcM"/>
+<div class="absolute inset-0 scanline pointer-events-none opacity-20"></div>
+<div class="absolute top-4 left-4 flex items-center space-x-2 bg-black/60 px-2 py-1">
+<span class="w-2 h-2 bg-primary animate-pulse"></span>
+<span class="font-label text-[10px] font-bold tracking-widest text-white">LIVE: STATION C</span>
+</div>
+<div class="absolute top-4 right-4 text-[10px] font-mono text-primary/80">CAM_VX_03</div>
+</div>
+<div class="bg-surface-container-high p-4 flex flex-col space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label text-[10px] font-bold text-gray-400 uppercase tracking-widest">Step 01: Core Milling</span>
+</div>
+<div class="flex items-center justify-between text-[10px] uppercase font-mono border-t border-white/5 pt-3">
+<span class="text-gray-500">Technician: <span class="text-white">AUTO_RM8</span></span>
+<span class="text-primary-container">Nominal</span>
+</div>
+</div>
+</div>
+<!-- Station D -->
+<div class="bg-surface-container-low p-[1px]">
+<div class="relative aspect-video overflow-hidden bg-black group">
+<img class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-700" data-alt="Wide shot of a dark automated factory floor with rows of orange robots and blue ambient lights reflecting on polished concrete" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdKIgibB-hIIGDrJDsYlDoRbWVTYWhYApOrbGWkdv6H9n7c0aoZmOkhc_YrhZTaU9vZeBWPdOqFKdAKnvRyuXsZplPU5fRcCWK_lD02-bHJ0fUeo-pEd2HL5_bviy7Yx-gdRSJVXtt1_0M7gz3Vk09coGF_bHidS9er7vFy8kxu3d5DyOSCLJPCVtD72-Fp_7Lzu7e2xEyQZIuuvJkY8FmRzuZjdKczfCw49xrz-gkMgIwSOGkP5AwDm3tKq_cIpDJh2AF2V03Dbg"/>
+<div class="absolute inset-0 scanline pointer-events-none opacity-20"></div>
+<div class="absolute top-4 left-4 flex items-center space-x-2 bg-black/60 px-2 py-1">
+<span class="w-2 h-2 bg-tertiary animate-pulse"></span>
+<span class="font-label text-[10px] font-bold tracking-widest text-white">LIVE: STATION D</span>
+</div>
+<div class="absolute top-4 right-4 text-[10px] font-mono text-tertiary/80">CAM_VX_04</div>
+</div>
+<div class="bg-surface-container-high p-4 flex flex-col space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-label text-[10px] font-bold text-gray-400 uppercase tracking-widest">Step 08: Micro-Soldering</span>
+</div>
+<div class="flex items-center justify-between text-[10px] uppercase font-mono border-t border-white/5 pt-3">
+<span class="text-gray-500">Technician: <span class="text-white">ID_441</span></span>
+<span class="text-tertiary-dim uppercase font-bold">Obstruction Alert</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Safety Violations Section -->
+<div class="grid grid-cols-12 gap-4">
+<div class="bg-surface-container-low p-6 flex flex-col col-span-12">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-label text-xs font-bold uppercase tracking-widest text-tertiary">Safety Violations</h3>
+<span class="text-[10px] font-mono text-gray-500">24H Window</span>
+</div>
+<div class="flex-1 space-y-3"><div class="bg-surface-container-high p-3 flex items-start space-x-3">
+<div class="w-8 h-8 bg-error-container/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-sm">warning</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<p class="text-[10px] font-bold uppercase text-white">HELMET MISSING</p>
+<p class="text-[8px] font-mono text-gray-500">14:02</p>
+</div>
+<p class="text-[9px] text-gray-400 mt-1">St_B: Operator ID_104 detected without required head protection.</p>
+</div>
+</div>
+<div class="bg-surface-container-high p-3 flex items-start space-x-3 border-l-2 border-secondary">
+<div class="w-8 h-8 bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-sm">bolt</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<p class="text-[10px] font-bold uppercase text-white">STEP 2 MISSING</p>
+<p class="text-[8px] font-mono text-gray-500">12:15</p>
+</div>
+<p class="text-[9px] text-gray-400 mt-1">St_D: Assembly sequence violation - skipping mandated alignment check.</p>
+</div>
+</div>
+<div class="bg-surface-container-high p-3 flex items-start space-x-3">
+<div class="w-8 h-8 bg-error-container/20 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-sm">medical_services</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<p class="text-[10px] font-bold uppercase text-white">EMERGENCY STOP</p>
+<p class="text-[8px] font-mono text-gray-500">09:44</p>
+</div>
+<p class="text-[9px] text-gray-400 mt-1">St_A: Manual E-Stop triggered by Supervisor ID_002.</p>
+</div>
+</div></div>
+<button class="mt-4 w-full py-2 bg-surface-container-highest text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-white transition-colors">
+                    View All Incident Logs
+                </button>
+</div>
+</div>
+</main>
+</body></html>

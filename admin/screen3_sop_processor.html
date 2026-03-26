@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SOP Doc Processor | SYSTEM_ADMIN</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed-variant": "#744600",
+              "surface-tint": "#8bacff",
+              "tertiary-dim": "#ff7168",
+              "on-secondary-container": "#fff6f0",
+              "error-dim": "#d7383b",
+              "surface-container": "#1a1a1a",
+              "tertiary": "#ff7168",
+              "primary-fixed": "#759eff",
+              "on-primary-fixed-variant": "#002868",
+              "on-secondary": "#4b2c00",
+              "primary": "#8bacff",
+              "background": "#0e0e0e",
+              "on-tertiary-container": "#1f0001",
+              "surface-bright": "#2c2c2c",
+              "primary-fixed-dim": "#5d8fff",
+              "on-surface": "#ffffff",
+              "on-tertiary-fixed-variant": "#7a000b",
+              "secondary-container": "#875200",
+              "surface-container-highest": "#262626",
+              "secondary-fixed-dim": "#ffb55b",
+              "error": "#ff716c",
+              "secondary": "#fc9e00",
+              "on-secondary-fixed": "#4d2d00",
+              "tertiary-fixed-dim": "#ff7b71",
+              "outline": "#767575",
+              "tertiary-container": "#fe4e49",
+              "on-primary-container": "#001f55",
+              "secondary-fixed": "#ffc789",
+              "surface-container-low": "#131313",
+              "on-error-container": "#ffa8a3",
+              "secondary-dim": "#e99200",
+              "inverse-primary": "#0057cf",
+              "on-error": "#490006",
+              "surface-container-high": "#20201f",
+              "tertiary-fixed": "#ff9289",
+              "primary-dim": "#036cfb",
+              "inverse-surface": "#fcf9f8",
+              "surface-container-lowest": "#000000",
+              "surface-dim": "#0e0e0e",
+              "on-background": "#ffffff",
+              "surface": "#0e0e0e",
+              "inverse-on-surface": "#565555",
+              "surface-variant": "#262626",
+              "outline-variant": "#484847",
+              "primary-container": "#759eff",
+              "on-primary-fixed": "#000000",
+              "on-tertiary-fixed": "#3a0002",
+              "on-tertiary": "#4a0004",
+              "on-primary": "#002a6c",
+              "on-surface-variant": "#adaaaa",
+              "error-container": "#9f0519"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Inter"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0e0e0e; }
+        ::-webkit-scrollbar-thumb { background: #262626; }
+        ::-webkit-scrollbar-thumb:hover { background: #8bacff; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary selection:text-on-primary">
+<!-- Top Bar (Absolute Positioning for Avatar) -->
+<div class="fixed top-0 right-0 z-50 p-6">
+<div class="h-10 w-10 bg-surface-container-highest border border-outline-variant flex items-center justify-center overflow-hidden">
+<img alt="Admin Profile Avatar" class="w-full h-full object-cover" data-alt="High-contrast portrait of a technical administrator in a dimly lit laboratory setting, cold blue ambient lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAx-FeKE6fLMwLG8pbbnbxNzYRI8Iv-owuRLhHeXdvgsXeh3AzRzFJRVI6l8HBN2A4efu1wzi1LTHqUyVqz4mXhY-Rxaz6M4nuN79LkqyfAq3bpEelQtficAE-o1cIZsNSCmcMIJHfmaZvIeDOkbKeCpyqqJpdQvTR1lsQjSIo_rBDeg_KcYY_7q_BF_fyHQ_0yh5ZkaIJUfAjNHoFAT5HIEPcjPI5B_WU3rV_xFs5QJ5GvxlfK3udzmAPRcgPznzXAlbD7Qsz_STs"/>
+</div>
+</div>
+<!-- SideNavBar (Full Height) -->
+<aside class="fixed left-0 top-0 h-full w-64 z-40 bg-[#131313] border-r border-[#20201f] flex flex-col pt-10 pb-6 px-0 font-['Inter'] text-sm uppercase tracking-widest">
+<div class="px-6 mb-10">
+<div class="text-[#8bacff] font-['Space_Grotesk'] font-black text-lg">CONTROL_UNIT</div>
+<div class="text-[10px] text-gray-500 mt-1">v4.0.2-STABLE</div>
+</div>
+<nav class="flex-1">
+<a class="flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-[#20201f] transition-all gap-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center px-6 py-4 text-gray-400 hover:text-white hover:bg-[#20201f] transition-all gap-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="terminal">terminal</span>
+<span>Logs</span>
+</a>
+<a class="flex items-center px-6 py-4 bg-[#20201f] text-[#8bacff] border-l-4 border-[#8bacff] transition-all gap-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="upload_file">upload_file</span>
+<span>Doc Upload</span>
+</a>
+</nav>
+<div class="mt-auto">
+<a class="flex items-center px-6 py-3 text-gray-400 hover:text-white hover:bg-[#20201f] transition-all gap-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="help">help</span>
+<span>Support</span>
+</a>
+<a class="flex items-center px-6 py-3 text-gray-400 hover:text-white hover:bg-[#20201f] transition-all gap-4" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="logout">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-10 min-h-screen bg-background p-8">
+<div class="max-w-6xl mx-auto">
+<!-- Header Section -->
+<div class="mb-10 flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<div class="w-2 h-8 bg-primary"></div>
+<h1 class="text-4xl font-headline font-bold uppercase tracking-tighter">SOP Doc Processor</h1>
+</div>
+</div>
+<!-- Input Horizontal Control Bar -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+<!-- Station Selection -->
+<div class="bg-surface-container-low p-6 flex flex-col gap-4 border-l-2 border-primary">
+<label class="font-label text-xs font-bold text-primary uppercase tracking-widest">System Station</label>
+<div class="relative">
+<select class="w-full bg-surface-container-highest border-0 focus:ring-0 text-on-surface font-body p-4 appearance-none cursor-pointer">
+<option>ASSEMBLY_LINE_ALPHA_01</option>
+<option>FABRICATION_HUB_BETA</option>
+<option>QUALITY_CONTROL_DELTA_9</option>
+<option>PACKAGING_UNIT_KAPPA</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- File Picker -->
+<div class="bg-surface-container-low p-6 flex flex-col gap-4 border-l-2 border-outline-variant">
+<label class="font-label text-xs font-bold text-on-surface-variant uppercase tracking-widest">Select SOP Document</label>
+<div class="group relative h-16 w-full bg-surface-container-highest border border-dashed border-outline-variant flex flex-row items-center justify-center gap-3 cursor-pointer hover:bg-surface-bright transition-colors px-4">
+<span class="material-symbols-outlined text-primary" data-icon="cloud_upload">cloud_upload</span>
+<span class="text-[10px] font-label text-on-surface-variant group-hover:text-primary transition-colors uppercase font-bold">Drop PDF or Manual File</span>
+<input class="absolute inset-0 opacity-0 cursor-pointer" type="file"/>
+</div>
+</div>
+<!-- Process Button -->
+<div class="flex items-end">
+<button class="w-full h-[88px] bg-primary hover:bg-primary-fixed transition-all flex items-center justify-center gap-3 active:scale-[0.98]">
+<span class="font-label font-bold text-on-primary uppercase tracking-tighter text-lg">Process Document</span>
+<span class="material-symbols-outlined text-on-primary" data-icon="bolt">bolt</span>
+</button>
+</div>
+</div>
+<!-- Results Section -->
+<section class="bg-surface-container-low p-8 border border-[#20201f]">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="font-headline text-2xl font-bold uppercase tracking-tight">Extracted SOP Steps</h2>
+<p class="text-on-surface-variant text-xs font-label mt-1">Refine extracted data before committing to production logs.</p>
+</div>
+<div class="flex gap-2">
+<button class="bg-surface-container-highest px-4 py-2 font-label text-xs font-bold uppercase tracking-widest hover:bg-surface-bright transition-colors border-b-2 border-primary-dim">Export CSV</button>
+<button class="bg-surface-container-highest px-4 py-2 font-label text-xs font-bold uppercase tracking-widest hover:bg-surface-bright transition-colors">Clear All</button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Step Item 1 -->
+<div class="group flex items-center justify-between p-4 bg-surface-container-highest hover:bg-surface-bright transition-all border-l-4 border-primary">
+<div class="flex items-center gap-6">
+<div class="font-headline text-2xl font-black text-outline-variant group-hover:text-primary transition-colors">01</div>
+<div>
+<h4 class="font-headline font-bold text-on-surface uppercase tracking-tight">Check Seal Integrity</h4>
+<p class="font-body text-xs text-on-surface-variant mt-1">Inspect secondary gasket layer for any micro-fissures or pressure deviations.</p>
+</div>
+</div>
+<button class="p-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-black/20">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+<!-- Step Item 2 -->
+<div class="group flex items-center justify-between p-4 bg-surface-container-highest hover:bg-surface-bright transition-all border-l-4 border-primary">
+<div class="flex items-center gap-6">
+<div class="font-headline text-2xl font-black text-outline-variant group-hover:text-primary transition-colors">02</div>
+<div>
+<h4 class="font-headline font-bold text-on-surface uppercase tracking-tight">Verify Component Alignment</h4>
+<p class="font-body text-xs text-on-surface-variant mt-1">Cross-reference laser positioning with the digital CAD overlay of the chassis.</p>
+</div>
+</div>
+<button class="p-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-black/20">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+<!-- Step Item 3 -->
+<div class="group flex items-center justify-between p-4 bg-surface-container-highest hover:bg-surface-bright transition-all border-l-4 border-primary">
+<div class="flex items-center gap-6">
+<div class="font-headline text-2xl font-black text-outline-variant group-hover:text-primary transition-colors">03</div>
+<div>
+<h4 class="font-headline font-bold text-on-surface uppercase tracking-tight">Torque Calibration</h4>
+<p class="font-body text-xs text-on-surface-variant mt-1">Apply precise force of 14.5 Nm to the primary intake housing bolts.</p>
+</div>
+</div>
+<button class="p-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-black/20">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+<!-- Step Item 4 -->
+<div class="group flex items-center justify-between p-4 bg-surface-container-highest hover:bg-surface-bright transition-all border-l-4 border-primary">
+<div class="flex items-center gap-6">
+<div class="font-headline text-2xl font-black text-outline-variant group-hover:text-primary transition-colors">04</div>
+<div>
+<h4 class="font-headline font-bold text-on-surface uppercase tracking-tight">Final Visual Pass</h4>
+<p class="font-body text-xs text-on-surface-variant mt-1">High-resolution optical scan for surface defects or left-behind FOD (Foreign Object Debris).</p>
+</div>
+</div>
+<button class="p-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-black/20">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+</div>
+<!-- System Telemetry Footer -->
+<div class="mt-8 pt-6 border-t border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-primary"></div>
+<span class="font-label text-[10px] uppercase text-on-surface-variant">Step Sequence Valid</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 bg-secondary"></div>
+<span class="font-label text-[10px] uppercase text-on-surface-variant">AI Confidence: High</span>
+</div>
+</div>
+<div class="text-[10px] font-label text-outline-variant uppercase tracking-widest">
+                        Process ID: SOP-99812-TX-001
+                    </div>
+</div>
+</section>
+</div>
+</main>
+</body></html>
