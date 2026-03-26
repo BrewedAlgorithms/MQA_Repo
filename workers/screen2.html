@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Industrial Intelligence - HUD</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Space Grotesk & Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space_Grotesk:wght@700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed": "#121d27",
+              "on-primary": "#00315e",
+              "surface-container-low": "#1c1b1b",
+              "surface-variant": "#353534",
+              "inverse-primary": "#005fae",
+              "on-background": "#e5e2e1",
+              "background": "#131313",
+              "secondary-fixed-dim": "#bcc8d6",
+              "on-surface-variant": "#c2c6d4",
+              "tertiary": "#ffba20",
+              "surface-tint": "#a5c8ff",
+              "surface-container-highest": "#353534",
+              "secondary": "#bcc8d6",
+              "inverse-surface": "#e5e2e1",
+              "on-primary-container": "#c6dbff",
+              "surface-container": "#201f1f",
+              "on-tertiary-fixed": "#271900",
+              "surface": "#131313",
+              "tertiary-container": "#7d5900",
+              "on-tertiary-container": "#ffd489",
+              "primary": "#a5c8ff",
+              "surface-container-lowest": "#0e0e0e",
+              "primary-fixed": "#d4e3ff",
+              "secondary-container": "#3d4854",
+              "on-surface": "#e5e2e1",
+              "on-primary-fixed": "#001c3a",
+              "surface-bright": "#393939",
+              "error": "#ffb4ab",
+              "surface-dim": "#131313",
+              "on-error": "#690005",
+              "error-container": "#93000a",
+              "outline": "#8c919d",
+              "on-tertiary-fixed-variant": "#5e4200",
+              "primary-container": "#0060af",
+              "on-tertiary": "#412d00",
+              "on-secondary-container": "#abb6c4",
+              "on-secondary-fixed-variant": "#3d4854",
+              "secondary-fixed": "#d8e4f2",
+              "inverse-on-surface": "#313030",
+              "tertiary-fixed-dim": "#ffba20",
+              "primary-fixed-dim": "#a5c8ff",
+              "on-error-container": "#ffdad6",
+              "outline-variant": "#424752",
+              "surface-container-high": "#2a2a2a",
+              "on-secondary": "#27313d",
+              "tertiary-fixed": "#ffdea8",
+              "on-primary-fixed-variant": "#004785"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .card-glow-active {
+        box-shadow: 0 0 32px rgba(165, 200, 255, 0.15);
+      }
+      .wave-bar {
+        animation: wave-animation 1.2s ease-in-out infinite;
+      }
+      @keyframes wave-animation {
+        0%, 100% { height: 4px; }
+        50% { height: 16px; }
+      }
+      .video-scanline {
+        background: linear-gradient(
+          to bottom,
+          rgba(18, 16, 16, 0) 50%,
+          rgba(0, 0, 0, 0.25) 50%
+        );
+        background-size: 100% 4px;
+        pointer-events: none;
+      }
+      .modal-glow {
+        box-shadow: 0 0 50px rgba(239, 68, 68, 0.3);
+      }
+    </style>
+</head>
+<body class="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-hidden select-none">
+<!-- Safety Violation Modal Overlay -->
+<div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+<!-- Backdrop with blur and darkening -->
+<div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+<!-- Modal Content -->
+<div class="relative w-full max-w-2xl bg-surface-container-high border-2 border-red-500 rounded-2xl p-10 modal-glow flex flex-col items-center text-center animate-in fade-in zoom-in duration-300">
+<div class="mb-6 flex items-center justify-center w-24 h-24 rounded-full bg-red-500/10 border-2 border-red-500/40">
+<span class="material-symbols-outlined text-red-500 text-6xl" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<h2 class="font-headline text-4xl font-bold text-red-500 uppercase tracking-tighter mb-4">Safety Violation Detected</h2>
+<p class="text-xl text-on-surface leading-relaxed max-w-lg mb-8">
+            Please ensure you are wearing your <span class="text-red-400 font-bold">safety mask</span> and <span class="text-red-400 font-bold">gloves</span> before continuing the assembly process.
+        </p>
+<div class="flex items-center gap-3 bg-red-500/10 border border-red-500/20 px-6 py-3 rounded-full">
+<div class="w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+<span class="text-sm font-bold uppercase tracking-[0.2em] text-red-400">Scanning for PPE...</span>
+</div>
+</div>
+</div>
+<!-- Background Content (Dimmed and Blurry due to Overlay) -->
+<div class="flex-grow flex flex-col opacity-40">
+<!-- Top Minimalist Title -->
+<div class="fixed top-8 left-1/2 -translate-x-1/2 z-50">
+<h1 class="font-headline text-2xl tracking-[0.5em] text-white/40 uppercase font-bold">NQA</h1>
+</div>
+<!-- Live Feed Popup (Top Left) -->
+<div class="fixed top-8 left-8 z-50 w-72 h-48 bg-surface-container-high rounded-xl border border-white/10 overflow-hidden shadow-2xl group">
+<div class="absolute inset-0 bg-black/40 video-scanline z-10"></div>
+<img alt="Factory Floor" class="w-full h-full object-cover opacity-60 grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsu4diFwr8JntmUKIuV1gC_efpH9usqKWhQCxUHP09p7cXqemwObQvALCbw6g-itPwHpBq540CcywBqGxEs1WKRM8by7yprFOLrTgmAsNjnA7KDwAS2W0SudUrvt6YTTTdqAM1OgKW6tvm8FOfWRy-DqJMD7DEzzEfZhI1Q-iG72t-M188cA-dUlOn7Vo_LNZRKKe3roHB22r9IGHgwGmi2l_os3aSu3CftvacXn4GfGmmE5eHv3yAcjtmTJYWdwvFQTteOLWBA96K"/>
+<div class="absolute top-3 left-3 z-20 flex items-center gap-2">
+<div class="w-2 h-2 bg-error rounded-full animate-pulse"></div>
+<span class="text-[10px] font-bold tracking-widest text-white uppercase drop-shadow-md">Unit 01 - Cam A</span>
+</div>
+<div class="absolute bottom-3 right-3 z-20">
+<span class="text-[10px] font-mono text-primary/80">24fps // 1080p</span>
+</div>
+</div>
+<!-- 9 Step Process List (Bottom Left) -->
+<div class="fixed bottom-10 left-10 z-50 flex flex-col gap-3 p-2">
+<div class="flex items-center gap-3">
+<div class="w-4 h-4 rounded-full border border-emerald-500/50 flex items-center justify-center bg-emerald-500/10">
+<span class="material-symbols-outlined text-emerald-400 text-[10px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-emerald-100/60">1. Visual Inspection</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-4 h-4 rounded-full border border-primary flex items-center justify-center bg-primary/20">
+<div class="w-1.5 h-1.5 bg-primary rounded-full"></div>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary">2. Surface Cleaning</span>
+</div>
+<div class="flex items-center gap-3 opacity-40">
+<div class="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center"></div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">3. Grommet Installation</span>
+</div>
+<div class="flex items-center gap-3 opacity-40">
+<div class="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center"></div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">4. Primary Seal Prep</span>
+</div>
+<div class="flex items-center gap-3 opacity-40">
+<div class="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center"></div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">5. Seal Fixing</span>
+</div>
+<div class="flex items-center gap-3 opacity-40">
+<div class="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center"></div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">6. Grommet Removal</span>
+</div>
+<div class="flex items-center gap-3 opacity-40">
+<div class="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center"></div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">7. Upper Side Pressing</span>
+</div>
+<div class="flex items-center gap-3 opacity-40">
+<div class="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center"></div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">8. Door Adjustment</span>
+</div>
+<div class="flex items-center gap-3 opacity-40">
+<div class="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center"></div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">9. Bottom Side Pressing</span>
+</div>
+</div>
+<!-- Main Content HUD -->
+<main class="flex-grow flex flex-col items-center justify-center relative px-4">
+<!-- Carousel Container -->
+<div class="relative w-full max-w-6xl flex items-center justify-center gap-0 md:gap-8 h-[550px]">
+<!-- Left Card (Previous) -->
+<div class="hidden md:flex flex-col shrink-0 w-64 h-80 bg-surface-container-low rounded-xl opacity-30 -translate-x-8 scale-90 p-6 relative overflow-hidden border-2 border-emerald-500/50">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold uppercase tracking-widest text-emerald-400">Step 1</span>
+<span class="material-symbols-outlined text-emerald-400" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h3 class="font-headline text-lg mb-2 text-emerald-100">Visual Inspection</h3>
+<div class="flex-grow bg-surface-container rounded-lg mb-4 flex items-center justify-center grayscale opacity-50">
+<span class="material-symbols-outlined text-4xl">visibility</span>
+</div>
+<div class="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">Completed</div>
+</div>
+<!-- Center Card (Active) -->
+<div class="z-20 w-full max-w-lg md:w-[520px] h-full bg-surface-container-high rounded-xl p-8 card-glow-active flex flex-col border-2 border-primary/40 relative">
+<div class="absolute top-0 left-0 w-full h-1.5 bg-surface-container-lowest">
+<div class="h-full bg-primary w-2/9"></div>
+</div>
+<div class="flex justify-between items-start mb-6 mt-4">
+<div>
+<span class="text-sm font-bold uppercase tracking-[0.2em] text-primary">Step 2 of 9</span>
+<h2 class="text-3xl font-headline text-on-surface mt-1">Surface Cleaning</h2>
+</div>
+<div class="bg-primary-container/20 text-primary border border-primary/20 px-4 py-1.5 rounded-full flex items-center gap-2">
+<span class="w-2 h-2 bg-primary rounded-full"></span>
+<span class="text-xs font-bold tracking-widest uppercase">In Progress</span>
+</div>
+</div>
+<!-- Visual Number Placeholder -->
+<div class="flex-grow relative flex items-center justify-center mb-4">
+<span class="font-headline font-bold text-primary select-none leading-none text-8xl">02</span>
+</div>
+<div class="text-center flex-grow flex items-center justify-center mb-0">
+<p class="font-bold text-on-surface leading-tight text-4xl">
+                            Clean the door surface using a <span class="text-primary">dry wiping cloth</span>.
+                        </p>
+</div>
+</div>
+<!-- Right Card (Next/Locked) -->
+<div class="hidden md:flex flex-col shrink-0 w-64 h-80 bg-surface-container-low rounded-xl opacity-30 translate-x-8 scale-90 p-6 relative overflow-hidden border border-white/5">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Step 3</span>
+<span class="material-symbols-outlined text-on-surface-variant">lock</span>
+</div>
+<h3 class="font-headline text-lg mb-2 text-on-surface">Grommet Installation</h3>
+<div class="flex-grow bg-surface-container rounded-lg mb-4 flex items-center justify-center grayscale opacity-50">
+<span class="material-symbols-outlined text-4xl">hardware</span>
+</div>
+<div class="text-on-surface-variant/40 text-sm font-bold uppercase tracking-wider">Locked</div>
+</div>
+</div>
+<!-- Bottom Step Tracker -->
+<div class="mt-12 flex flex-col items-center gap-4">
+<div class="flex items-center gap-3">
+<!-- Step 1: Completed -->
+<div class="w-10 h-10 border-2 border-emerald-500/50 bg-emerald-500/10 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-emerald-400 text-lg" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- Step 2: In Progress -->
+<div class="w-10 h-10 border-2 border-primary bg-primary/20 rounded flex items-center justify-center relative">
+<span class="text-primary font-headline text-xs font-bold">02</span>
+<div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary"></div>
+</div>
+<!-- Upcoming Steps -->
+<div class="flex gap-3 opacity-30">
+<div class="w-10 h-10 border border-white/10 bg-surface-container rounded flex items-center justify-center"><span class="text-on-surface-variant font-headline text-xs">03</span></div>
+<div class="w-10 h-10 border border-white/10 bg-surface-container rounded flex items-center justify-center"><span class="text-on-surface-variant font-headline text-xs">04</span></div>
+<div class="w-10 h-10 border border-white/10 bg-surface-container rounded flex items-center justify-center"><span class="text-on-surface-variant font-headline text-xs">05</span></div>
+<div class="w-10 h-10 border border-white/10 bg-surface-container rounded flex items-center justify-center"><span class="text-on-surface-variant font-headline text-xs">06</span></div>
+<div class="w-10 h-10 border border-white/10 bg-surface-container rounded flex items-center justify-center"><span class="text-on-surface-variant font-headline text-xs">07</span></div>
+<div class="w-10 h-10 border border-white/10 bg-surface-container rounded flex items-center justify-center"><span class="text-on-surface-variant font-headline text-xs">08</span></div>
+<div class="w-10 h-10 border border-white/10 bg-surface-container rounded flex items-center justify-center"><span class="text-on-surface-variant font-headline text-xs">09</span></div>
+</div>
+</div>
+<div class="flex items-center gap-2 opacity-40">
+<span class="material-symbols-outlined text-[10px]">auto_awesome</span>
+<span class="text-[10px] font-bold uppercase tracking-[0.2em] text-on-surface-variant">AI Managed Workflow Progression</span>
+</div>
+</div>
+</main>
+<!-- AI Agent Listening (Bottom Right) -->
+<div class="fixed bottom-10 right-10 flex flex-col items-end gap-3 z-50">
+<div class="flex items-end gap-1 px-4 h-8">
+<div class="wave-bar w-1 bg-primary/80 rounded-full" style="animation-delay: 0.1s;"></div>
+<div class="wave-bar w-1 bg-primary/60 rounded-full" style="animation-delay: 0.3s; height: 12px;"></div>
+<div class="wave-bar w-1 bg-primary/90 rounded-full" style="animation-delay: 0.2s; height: 18px;"></div>
+<div class="wave-bar w-1 bg-primary/70 rounded-full" style="animation-delay: 0.4s; height: 14px;"></div>
+<div class="wave-bar w-1 bg-primary/50 rounded-full" style="animation-delay: 0.15s; height: 10px;"></div>
+<div class="wave-bar w-1 bg-primary/90 rounded-full" style="animation-delay: 0.35s; height: 20px;"></div>
+</div>
+<div class="bg-surface-container-high border border-primary/20 w-10 h-10 rounded-full flex items-center justify-center shadow-xl"><span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">mic</span></div>
+</div>
+</div>
+</body></html>

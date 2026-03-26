@@ -1,0 +1,36 @@
+import React, { createContext, useContext, useState } from 'react';
+import { workflowSteps } from '../data/workflowSteps';
+
+const WorkflowContext = createContext();
+
+export function WorkflowProvider({ children }) {
+  const [currentStepId, setCurrentStepId] = useState(1);
+
+  const nextStep = () => {
+    if (currentStepId < workflowSteps.length) setCurrentStepId(prev => prev + 1);
+  };
+
+  const prevStep = () => {
+    if (currentStepId > 1) setCurrentStepId(prev => prev - 1);
+  };
+
+  const currentStepData = workflowSteps.find(s => s.id === currentStepId);
+
+  return (
+    <WorkflowContext.Provider value={{
+      currentStepId,
+      setCurrentStepId,
+      nextStep,
+      prevStep,
+      currentStepData,
+      totalSteps: workflowSteps.length,
+      workflowSteps
+    }}>
+      {children}
+    </WorkflowContext.Provider>
+  );
+}
+
+export function useWorkflow() {
+  return useContext(WorkflowContext);
+}
