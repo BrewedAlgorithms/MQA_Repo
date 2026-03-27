@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import TopTitle from '../components/TopTitle';
 import LiveFeedPopup from '../components/LiveFeedPopup';
 import ProcessList from '../components/ProcessList';
@@ -8,22 +8,124 @@ import { useNavigate } from 'react-router-dom';
 
 export default function WorkflowHUD() {
   const navigate = useNavigate();
+  const [helmetStatus, setHelmetStatus] = useState('checking');
+  const [glovesStatus, setGlovesStatus] = useState('checking');
+  const [isSafetyComplete, setIsSafetyComplete] = useState(false);
+
+  useEffect(() => {
+    // 2 seconds for Helmet check
+    const helmetTimer = setTimeout(() => {
+      setHelmetStatus('verified');
+    }, 2000);
+
+    // 6 seconds for Gloves check
+    const glovesTimer = setTimeout(() => {
+      setGlovesStatus('verified');
+    }, 8000);
+
+    // Total sequence: max checking time (8s) + 3s of "all clear" state
+    const completionTimer = setTimeout(() => {
+      setIsSafetyComplete(true);
+    }, 11000);
+
+    return () => {
+      clearTimeout(helmetTimer);
+      clearTimeout(glovesTimer);
+      clearTimeout(completionTimer);
+    };
+  }, []);
 
   return (
     <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
-      {/* Navigation aid to proceed to Warning */}
-      <button 
-        onClick={() => navigate('/warning')}
-        className="fixed top-8 right-8 z-50 bg-error/10 border border-error/30 text-error px-6 py-2 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-error/20 transition-colors"
-      >
-        Trigger Violation &rarr;
-      </button>
-
       <TopTitle />
       <LiveFeedPopup />
-      <ProcessList />
-      <MainCarousel />
-      <AgentListening />
+
+      {!isSafetyComplete ? (
+        <main className="flex-grow flex flex-col items-center justify-center px-6 md:px-20 py-10 z-10 w-full mt-40 font-body">
+          <div className="max-w-3xl w-full">
+            <div className="mb-10 text-center">
+              <h1 className="font-headline text-5xl font-bold text-primary tracking-tight mb-4 uppercase">Safety Verification</h1>
+              <p className="text-white/40 text-lg uppercase tracking-[0.2em] font-medium text-[12px]">System check required before terminal activation</p>
+            </div>
+
+            <div className="space-y-4">
+              {/* Item 1: Helmet - 2s Check */}
+              <div className={`p-8 rounded-2xl flex items-center justify-between border border-white/5 bg-white/[0.03] backdrop-blur-md shadow-xl border-l-4 transition-all duration-700 ${helmetStatus === 'checking' ? 'border-l-primary/30' : 'border-l-primary'}`}>
+                <div className="flex items-center gap-8">
+                  <div className={`w-20 h-20 flex items-center justify-center rounded-xl border transition-all duration-700 ${helmetStatus === 'checking' ? 'bg-white/5 border-white/10' : 'bg-primary/10 border-primary/20'}`}>
+                    <span className={`material-symbols-outlined text-4xl transition-colors duration-700 ${helmetStatus === 'checking' ? 'text-white/30' : 'text-primary'}`} data-icon="construction">construction</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-headline font-bold text-white tracking-wide">Helmet</h2>
+                    <p className="text-white/30 text-sm font-medium uppercase tracking-widest mt-1">Head protection integrity checked</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  {helmetStatus === 'checking' ? (
+                    <>
+                      <span className="text-xl font-bold tracking-[0.2em] text-white/20 uppercase">Checking</span>
+                      <div className="w-14 h-14 flex items-center justify-center animate-spin text-white/20">
+                        <span className="material-symbols-outlined text-3xl" data-icon="progress_activity">progress_activity</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xl font-bold tracking-[0.2em] text-primary uppercase">CLEAR</span>
+                      <div className="w-14 h-14 bg-primary/20 flex items-center justify-center rounded-full border border-primary/30">
+                        <span className="material-symbols-outlined text-primary text-3xl" data-icon="check_circle" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Item 2: Gloves - 6s Check */}
+              <div className={`p-8 rounded-2xl flex items-center justify-between border border-white/5 bg-white/[0.03] backdrop-blur-md shadow-xl border-l-4 transition-all duration-700 ${glovesStatus === 'checking' ? 'border-l-primary/30' : 'border-l-primary'}`}>
+                <div className="flex items-center gap-8">
+                  <div className={`w-20 h-20 flex items-center justify-center rounded-xl border transition-all duration-700 ${glovesStatus === 'checking' ? 'bg-white/5 border-white/10' : 'bg-primary/10 border-primary/20'}`}>
+                    <span className={`material-symbols-outlined text-4xl transition-colors duration-700 ${glovesStatus === 'checking' ? 'text-white/30' : 'text-primary'}`} data-icon="front_hand">front_hand</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-headline font-bold text-white tracking-wide">Gloves</h2>
+                    <p className="text-white/30 text-sm font-medium uppercase tracking-widest mt-1">Tactile protection confirmed</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  {glovesStatus === 'checking' ? (
+                    <>
+                      <span className="text-xl font-bold tracking-[0.2em] text-white/20 uppercase">Checking</span>
+                      <div className="w-14 h-14 flex items-center justify-center animate-spin text-white/20">
+                        <span className="material-symbols-outlined text-3xl" data-icon="progress_activity">progress_activity</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xl font-bold tracking-[0.2em] text-primary uppercase">CLEAR</span>
+                      <div className="w-14 h-14 bg-primary/20 flex items-center justify-center rounded-full border border-primary/30">
+                        <span className="material-symbols-outlined text-primary text-3xl" data-icon="check_circle" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <footer className="mt-16 pt-8 border-t border-white/5 flex justify-between items-center text-[10px] uppercase tracking-[0.4em] text-white/10 font-headline font-bold">
+              <span>Automated Monitoring active</span>
+              <span className="flex items-center gap-2">
+                <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
+                {glovesStatus === 'checking' ? 'Scanning Environment...' : 'System Ready'}
+              </span>
+            </footer>
+          </div>
+        </main>
+      ) : (
+        <>
+          <ProcessList />
+          <MainCarousel />
+          <AgentListening />
+        </>
+      )}
     </div>
   );
 }
