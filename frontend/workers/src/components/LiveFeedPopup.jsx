@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function LiveFeedPopup() {
-  const { currentStepId, setCurrentStepId, workflowSteps } = useWorkflow();
+  const { currentStepId, setCurrentStepId, workflowSteps, setIsWorkflowCompleted } = useWorkflow();
   const videoRef = useRef(null);
   const [currentTimeDisplay, setCurrentTimeDisplay] = useState('0:00');
 
@@ -28,11 +28,17 @@ export default function LiveFeedPopup() {
     // and it's the first such step.
     const targetStep = workflowSteps.find(s => currentTime < timeToSeconds(s.endTime));
 
-    if (targetStep && targetStep.id !== currentStepId) {
-      setCurrentStepId(targetStep.id);
-    } else if (!targetStep && currentStepId !== workflowSteps.length) {
-      // If we are past the last step's endTime, stay on the last step
-      setCurrentStepId(workflowSteps.length);
+    if (targetStep) {
+      setIsWorkflowCompleted(false);
+      if (targetStep.id !== currentStepId) {
+        setCurrentStepId(targetStep.id);
+      }
+    } else {
+      // If we are past the last step's endTime
+      setIsWorkflowCompleted(true);
+      if (currentStepId !== workflowSteps.length) {
+        setCurrentStepId(workflowSteps.length);
+      }
     }
   };
 

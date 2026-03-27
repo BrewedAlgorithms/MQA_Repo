@@ -5,6 +5,7 @@ const WorkflowContext = createContext();
 
 export function WorkflowProvider({ children }) {
   const [currentStepId, setCurrentStepId] = useState(1);
+  const [isWorkflowCompleted, setIsWorkflowCompleted] = useState(false);
 
 
   const currentStepData = workflowSteps.find(s => s.id === currentStepId);
@@ -14,6 +15,8 @@ export function WorkflowProvider({ children }) {
       currentStepId,
       setCurrentStepId,
       currentStepData,
+      isWorkflowCompleted,
+      setIsWorkflowCompleted,
       totalSteps: workflowSteps.length,
       workflowSteps
     }}>

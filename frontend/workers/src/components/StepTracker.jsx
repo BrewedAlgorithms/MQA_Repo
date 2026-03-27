@@ -2,14 +2,14 @@ import React from 'react';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function StepTracker() {
-  const { currentStepId, workflowSteps } = useWorkflow();
+  const { currentStepId, workflowSteps, isWorkflowCompleted } = useWorkflow();
 
   return (
     <div className="mt-12 flex flex-col items-center gap-4">
       <div className="flex items-center gap-3">
         {workflowSteps.map(step => {
-          const isCompleted = step.id < currentStepId;
-          const isActive = step.id === currentStepId;
+          const isCompleted = step.id < currentStepId || (step.id === currentStepId && isWorkflowCompleted);
+          const isActive = step.id === currentStepId && !isWorkflowCompleted;
           const isPending = step.id > currentStepId;
           const label = step.id < 10 ? `0${step.id}` : `${step.id}`;
 

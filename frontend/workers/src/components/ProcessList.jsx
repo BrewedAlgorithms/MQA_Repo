@@ -2,13 +2,13 @@ import React from 'react';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function ProcessList() {
-  const { currentStepId, workflowSteps } = useWorkflow();
+  const { currentStepId, workflowSteps, isWorkflowCompleted } = useWorkflow();
 
   return (
     <div className="fixed bottom-10 left-10 z-50 flex flex-col gap-3 p-2">
       {workflowSteps.map(step => {
-        const isCompleted = step.id < currentStepId;
-        const isActive = step.id === currentStepId;
+        const isCompleted = step.id < currentStepId || (step.id === currentStepId && isWorkflowCompleted);
+        const isActive = step.id === currentStepId && !isWorkflowCompleted;
         const isPending = step.id > currentStepId;
 
         return (

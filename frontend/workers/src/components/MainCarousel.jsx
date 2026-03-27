@@ -3,7 +3,7 @@ import StepTracker from './StepTracker';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function MainCarousel() {
-  const { currentStepId, workflowSteps, totalSteps } = useWorkflow();
+  const { currentStepId, workflowSteps, totalSteps, isWorkflowCompleted } = useWorkflow();
 
   const prevStepData = currentStepId > 1 ? workflowSteps[currentStepId - 2] : null;
   const currentStepData = workflowSteps[currentStepId - 1];
@@ -33,22 +33,22 @@ export default function MainCarousel() {
         )}
 
         {/* Center Card (Active) */}
-        <div key={`active-${currentStepId}`} className="animate-slide-fade z-20 w-full max-w-lg md:w-[520px] h-full bg-surface-container-high rounded-xl p-8 card-glow-active flex flex-col border-2 border-primary/40 relative overflow-hidden">
+        <div key={`active-${currentStepId}`} className={`animate-slide-fade z-20 w-full max-w-lg md:w-[520px] h-full bg-surface-container-high rounded-xl p-8 flex flex-col border-2 relative overflow-hidden ${isWorkflowCompleted ? 'border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)]' : 'card-glow-active border-primary/40'}`}>
           <div className="absolute top-0 left-0 w-full h-1.5 bg-surface-container-lowest">
             <div 
-              className="h-full bg-primary shadow-[0_0_12px_rgba(165,200,255,0.5)] transition-all duration-500" 
-              style={{ width: `${(currentStepId / totalSteps) * 100}%` }}
+              className={`h-full transition-all duration-500 ${isWorkflowCompleted ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' : 'bg-primary shadow-[0_0_12px_rgba(165,200,255,0.5)]'}`} 
+              style={{ width: `${isWorkflowCompleted ? 100 : (currentStepId / totalSteps) * 100}%` }}
             ></div>
           </div>
           
           <div className="flex justify-between items-start mb-6 mt-4">
             <div>
-              <span className="text-sm font-bold uppercase tracking-[0.2em] text-primary">Step {currentStepId} of {totalSteps}</span>
+              <span className={`text-sm font-bold uppercase tracking-[0.2em] ${isWorkflowCompleted ? 'text-emerald-400' : 'text-primary'}`}>Step {currentStepId} of {totalSteps}</span>
               <h2 className="text-3xl font-headline text-on-surface mt-1">{currentStepData.title}</h2>
             </div>
-            <div className="bg-primary-container/20 text-primary border border-primary/20 px-4 py-1.5 rounded-full flex items-center gap-2">
-              <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-              <span className="text-xs font-bold tracking-widest uppercase">In Progress</span>
+            <div className={`${isWorkflowCompleted ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-primary-container/20 text-primary border-primary/20'} border px-4 py-1.5 rounded-full flex items-center gap-2`}>
+              <span className={`w-2 h-2 rounded-full ${isWorkflowCompleted ? 'bg-emerald-500' : 'bg-primary animate-pulse'}`}></span>
+              <span className="text-xs font-bold tracking-widest uppercase">{isWorkflowCompleted ? 'Completed' : 'In Progress'}</span>
             </div>
           </div>
 
