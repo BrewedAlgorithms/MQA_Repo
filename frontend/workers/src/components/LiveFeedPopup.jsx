@@ -2,18 +2,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import Hls from 'hls.js';
 import { useWorkflow } from '../context/WorkflowContext';
 
-// HLS stream served by MediaMTX – override via VITE_STREAM_URL if needed
+// HLS stream – override via VITE_STREAM_URL if needed
 const STREAM_URL =
   import.meta.env.VITE_STREAM_URL ||
   'http://localhost:8888/live/index.m3u8';
 
+// Timestamp API served by streamer.py alongside the RTSP push
+const TIMESTAMP_URL =
+  import.meta.env.VITE_TIMESTAMP_URL ||
+  'http://localhost:5051/position';
+
 export default function LiveFeedPopup() {
   const { currentStepId, setCurrentStepId, workflowSteps, setIsWorkflowCompleted } = useWorkflow();
-  const [liveTime, setLiveTime] = useState('');
+  const [liveTime, setLiveTime] = useState('0:00');
   const [streamError, setStreamError] = useState(false);
-  const startTimeRef = useRef(Date.now());
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
+  // Track latest elapsed seconds from the video (not wall-clock)
+  const elapsedRef = useRef(0);
 
   // ── HLS player setup ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -58,19 +64,36 @@ export default function LiveFeedPopup() {
     };
   }, []);
 
-  // ── Elapsed-time clock + workflow step progression ──────────────────────────
+  // ── Poll streamer.py /position for exact video timestamp ───────────────────
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const res = await fetch(TIMESTAMP_URL);
+        if (!res.ok) return;
+        const { seconds, time } = await res.json();
+        elapsedRef.current = seconds;
+        setLiveTime(time);
+      } catch {
+        // streamer not running yet — keep last known value
+      }
+    };
+
+    poll(); // immediate first fetch
+    const id = setInterval(poll, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // ── Workflow step progression driven by video position ──────────────────────
   useEffect(() => {
     const tick = () => {
-      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      const mins = Math.floor(elapsed / 60);
-      const secs = elapsed % 60;
-      setLiveTime(`${mins}:${secs.toString().padStart(2, '0')}`);
+      const elapsed = elapsedRef.current;
 
       const timeToSeconds = (t) => {
         if (!t) return 0;
         const [m, s] = t.split(':').map(Number);
         return m * 60 + s;
       };
+
       const targetStep = workflowSteps.find(s => elapsed < timeToSeconds(s.endTime));
       if (targetStep) {
         setIsWorkflowCompleted(false);
@@ -113,7 +136,7 @@ export default function LiveFeedPopup() {
         <span className="text-[10px] font-bold tracking-widest text-white uppercase drop-shadow-md">Unit 01 - Cam A</span>
       </div>
 
-      {/* Elapsed clock */}
+      {/* Video timestamp from streamer */}
       <div className="absolute top-3 right-3 z-20 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded border border-white/10">
         <span className="text-[10px] font-mono font-bold text-white tracking-widest">{liveTime}</span>
       </div>
