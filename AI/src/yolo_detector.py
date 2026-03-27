@@ -56,7 +56,7 @@ class YoloObjectDetector:
             augment=False,      # TTA runs 3x inference internally — disabled for low latency
             agnostic_nms=True,  # class-agnostic NMS prevents duplicate boxes across similar classes
             iou=0.4,            # tighter IoU keeps only the best box when detections heavily overlap
-            half=True,          # FP16 inference — ~2x faster on GPU with negligible accuracy loss
+            half=isinstance(self.device, int),  # FP16 only on CUDA GPU; CPU/MPS requires FP32
         )
         if not results:
             return []

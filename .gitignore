@@ -40,3 +40,5 @@ Server/Media/
 .DS_Store
 Thumbs.db
 .vscode/
+
+.garage/

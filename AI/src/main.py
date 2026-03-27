@@ -129,11 +129,11 @@ def load_sop_from_json(path: str):
 
 YOLO_MODEL_PATH   = "yolo26l.pt"
 TARGET_OBJECTS    = []   # lowercase COCO names
-YOLO_DEVICE       = "0"
+YOLO_DEVICE       = "mps"
 YOLO_IMGSZ        = 640
 YOLO_CONF         = 0.30
 POSE_MODEL_PATH   = "yolo26l-pose.pt"
-POSE_DEVICE       = "0"
+POSE_DEVICE       = "mps"
 POSE_IMGSZ        = 640
 POSE_CONF         = 0.30
 POSE_INTERVAL     = 0.25   # seconds between pose updates
