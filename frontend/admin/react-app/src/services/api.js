@@ -21,7 +21,7 @@ async function request(method, path, body = null) {
 export const stationsApi = {
   list: () => request('GET', '/api/stations'),
   create: (name) => request('POST', '/api/stations', { name }),
-  rename: (id, name) => request('PUT', `/api/stations/${id}`, { name }),
+  update: (id, payload) => request('PUT', `/api/stations/${id}`, payload),
   delete: (id) => request('DELETE', `/api/stations/${id}`),
 };
 

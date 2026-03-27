@@ -72,11 +72,20 @@ class _ReuseHTTPServer(HTTPServer):
     allow_reuse_address = True
 
 
-def _start_timestamp_server():
-    server = _ReuseHTTPServer(("0.0.0.0", TIMESTAMP_PORT), TimestampHandler)
-    t = threading.Thread(target=server.serve_forever, daemon=True)
-    t.start()
-    print(f"[INFO] Timestamp API → http://localhost:{TIMESTAMP_PORT}/position")
+def _start_timestamp_server(max_tries: int = 10) -> int:
+    """Try TIMESTAMP_PORT, then TIMESTAMP_PORT+1 … until a free port is found."""
+    for port in range(TIMESTAMP_PORT, TIMESTAMP_PORT + max_tries):
+        try:
+            server = _ReuseHTTPServer(("0.0.0.0", port), TimestampHandler)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            print(f"[INFO] Timestamp API → http://localhost:{port}/position")
+            return port
+        except OSError:
+            print(f"[WARN] Port {port} in use, trying {port + 1}…")
+    raise RuntimeError(
+        f"[ERROR] Could not bind timestamp server on ports "
+        f"{TIMESTAMP_PORT}–{TIMESTAMP_PORT + max_tries - 1}"
+    )
 
 
 # ── Source selection ───────────────────────────────────────────────────────────
@@ -134,7 +143,7 @@ def build_ffmpeg_cmd(width: int, height: int, fps: float) -> list[str]:
 
 
 # ── Main streaming loop ────────────────────────────────────────────────────────
-def stream(capture: cv2.VideoCapture, source_label: str):
+def stream(capture: cv2.VideoCapture, source_label: str, timestamp_port: int = TIMESTAMP_PORT):
     global _position_seconds
 
     width  = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -150,62 +159,97 @@ def stream(capture: cv2.VideoCapture, source_label: str):
     cmd = build_ffmpeg_cmd(width, height, fps)
 
     print(f"\n[INFO] Streaming {source_label}")
-    print(f"[INFO] RTSP  → {RTSP_URL}")
-    print(f"[INFO] HLS   → http://{MEDIAMTX_HOST}:8888/{STREAM_PATH}/index.m3u8")
+    print(f"[INFO] RTSP      → {RTSP_URL}")
+    print(f"[INFO] HLS       → http://{MEDIAMTX_HOST}:8888/{STREAM_PATH}/index.m3u8")
+    print(f"[INFO] Timestamp → http://localhost:{timestamp_port}/position")
     print("[INFO] Press Ctrl+C to stop.\n")
-
-    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
 
     is_video_file  = capture.get(cv2.CAP_PROP_FRAME_COUNT) > 0
     frame_interval = 1.0 / fps
-    next_frame_time = time.time()
 
-    try:
-        while True:
-            ret, frame = capture.read()
-            if not ret:
-                if is_video_file:
-                    capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                    next_frame_time = time.time()
-                    with _position_lock:
-                        _position_seconds = 0.0
-                    continue
+    # Outer reconnect loop — if MediaMTX drops this publisher (e.g. a new
+    # streamer took the slot), FFmpeg dies but we restart instead of crashing.
+    while True:
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+        next_frame_time = time.time()
+        pipe_broken = False
+        last_frame = None  # held frame written during the seek gap on video loop
+
+        try:
+            while True:
+                ret, frame = capture.read()
+                if not ret:
+                    if is_video_file:
+                        capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        next_frame_time = time.time()
+                        with _position_lock:
+                            _position_seconds = 0.0
+                        # Feed the last good frame to FFmpeg while OpenCV is
+                        # seeking; without this, the stdin gap causes MediaMTX
+                        # to close the session and FFmpeg exits with SIGPIPE.
+                        if last_frame is not None:
+                            frame = last_frame
+                        else:
+                            time.sleep(0.01)
+                            continue
+                    else:
+                        print("[WARN] Webcam read failed — stopping.")
+                        return
                 else:
-                    print("[WARN] Webcam read failed — stopping.")
+                    last_frame = frame
+
+                pos_ms = capture.get(cv2.CAP_PROP_POS_MSEC)
+                with _position_lock:
+                    _position_seconds = pos_ms / 1000.0
+
+                if frame.shape[1] != width or frame.shape[0] != height:
+                    frame = cv2.resize(frame, (width, height))
+
+                # Guard: detect FFmpeg death before attempting a write so we
+                # reconnect immediately instead of waiting for the next frame.
+                if proc.poll() is not None:
+                    print("[WARN] FFmpeg exited unexpectedly — reconnecting in 2s…")
+                    pipe_broken = True
                     break
 
-            # Update shared video position (seconds into the file)
-            pos_ms = capture.get(cv2.CAP_PROP_POS_MSEC)
-            with _position_lock:
-                _position_seconds = pos_ms / 1000.0
+                try:
+                    proc.stdin.write(frame.tobytes())
+                except BrokenPipeError:
+                    print("[WARN] FFmpeg pipe closed — reconnecting in 2s…")
+                    pipe_broken = True
+                    break
 
-            # Resize if needed
-            if frame.shape[1] != width or frame.shape[0] != height:
-                frame = cv2.resize(frame, (width, height))
+                next_frame_time += frame_interval
+                sleep_dur = next_frame_time - time.time()
+                if sleep_dur > 0:
+                    time.sleep(sleep_dur)
+                else:
+                    next_frame_time = time.time()
 
+        except KeyboardInterrupt:
+            print("\n[INFO] Streamer stopped.")
             try:
-                proc.stdin.write(frame.tobytes())
-            except BrokenPipeError:
-                print("[ERROR] FFmpeg pipe closed unexpectedly.")
-                break
+                proc.stdin.close()
+            except Exception:
+                pass
+            proc.wait()
+            capture.release()
+            return
+        finally:
+            try:
+                proc.stdin.close()
+            except Exception:
+                pass
+            proc.wait()
 
-            # Pace to real-time
-            next_frame_time += frame_interval
-            sleep_dur = next_frame_time - time.time()
-            if sleep_dur > 0:
-                time.sleep(sleep_dur)
-            else:
-                next_frame_time = time.time()
+        if pipe_broken:
+            time.sleep(2)
+            print("[INFO] Restarting FFmpeg…")
+            continue
 
-    except KeyboardInterrupt:
-        print("\n[INFO] Streamer stopped.")
-    finally:
-        try:
-            proc.stdin.close()
-        except Exception:
-            pass
-        proc.wait()
+        # Any other exit (e.g. webcam stopped) — don't loop
         capture.release()
+        return
 
 
 # ── Entry point ────────────────────────────────────────────────────────────────
@@ -230,8 +274,8 @@ def main():
         else f"webcam (index {source})"
     )
 
-    _start_timestamp_server()
-    stream(capture, label)
+    bound_port = _start_timestamp_server()
+    stream(capture, label, timestamp_port=bound_port)
 
 
 if __name__ == "__main__":

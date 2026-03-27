@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function SafetyViolations() {
+export default function SafetyViolations({ onViewIncidents }) {
   const violations = [
     {
       id: 1, type: 'HELMET MISSING', time: '14:02', 
@@ -42,8 +42,12 @@ export default function SafetyViolations() {
             </div>
           ))}
         </div>
-        <button className="mt-4 w-full py-2 bg-surface-container-highest text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-white transition-colors">
-          View All Incident Logs
+        <button
+          onClick={onViewIncidents}
+          className="mt-4 w-full py-2 bg-surface-container-highest text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-2"
+        >
+          <span className="material-symbols-outlined text-sm">open_in_new</span>
+          View Incident Logs
         </button>
       </div>
     </div>

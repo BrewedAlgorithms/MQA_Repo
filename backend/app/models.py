@@ -40,7 +40,31 @@ class StationRename(BaseModel):
 class StationOut(BaseModel):
     id: str = Field(..., description="MongoDB ObjectId as a hex string.", examples=["664f1a2b3c4d5e6f7a8b9c0d"])
     name: str = Field(..., description="Station display name.", examples=["ASSEMBLY_LINE_ALPHA_01"])
+    source_type: Optional[str] = Field(default=None, description="Stream source type: 'rtsp' or 'hls'. Null means no source configured.")
+    rtsp_url: Optional[str] = Field(default=None, description="RTSP stream URL (used when source_type is 'rtsp').")
+    hls_url: Optional[str] = Field(default=None, description="HLS stream URL (used when source_type is 'hls').")
     created_at: datetime = Field(..., description="UTC timestamp of creation.")
+
+
+class StationUpdate(BaseModel):
+    name: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=100,
+        description="New display name. Omit to leave unchanged.",
+    )
+    source_type: Optional[str] = Field(
+        default=None,
+        description="Stream source type: 'rtsp', 'hls', or null to clear.",
+    )
+    rtsp_url: Optional[str] = Field(
+        default=None,
+        description="RTSP stream URL. Used when source_type is 'rtsp'.",
+    )
+    hls_url: Optional[str] = Field(
+        default=None,
+        description="HLS stream URL. Used when source_type is 'hls'.",
+    )
 
 
 # ── SOP Steps ─────────────────────────────────────────────────────────────────

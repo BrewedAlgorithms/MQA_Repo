@@ -63,11 +63,6 @@ export default function Sidebar({ currentScreen, setCurrentScreen }) {
       </nav>
 
       <div className="mt-auto flex flex-col gap-2">
-        <button className="flex items-center px-6 py-3 text-gray-400 hover:text-error hover:bg-[#20201f] transition-all gap-4 text-left font-bold text-xs font-['Space_Grotesk'] tracking-widest uppercase">
-          <span className="material-symbols-outlined text-lg">dangerous</span>
-          <span>EMERGENCY_STOP</span>
-        </button>
-        
         <div className="border-t border-[#20201f] mt-2 pt-2">
           <button className="w-full flex items-center px-6 py-3 text-gray-400 hover:text-white hover:bg-[#20201f] transition-all gap-4 text-left">
             <span className="material-symbols-outlined text-lg">settings</span>

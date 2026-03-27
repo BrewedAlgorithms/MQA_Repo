@@ -3,7 +3,7 @@ from bson import ObjectId
 from datetime import datetime, timezone
 
 from app.database import get_db
-from app.models import StationCreate, StationRename, StationOut
+from app.models import StationCreate, StationRename, StationUpdate, StationOut
 
 router = APIRouter(prefix="/api/stations", tags=["stations"])
 
@@ -12,6 +12,9 @@ def _station_out(doc: dict) -> StationOut:
     return StationOut(
         id=str(doc["_id"]),
         name=doc["name"],
+        source_type=doc.get("source_type"),
+        rtsp_url=doc.get("rtsp_url"),
+        hls_url=doc.get("hls_url"),
         created_at=doc["created_at"],
     )
 
@@ -57,10 +60,11 @@ async def create_station(body: StationCreate):
 @router.put(
     "/{station_id}",
     response_model=StationOut,
-    summary="Rename a station",
+    summary="Update a station",
     description=(
-        "Updates the display name of an existing station. "
-        "The new name must not conflict with any other station."
+        "Updates an existing station. Supports renaming and setting the stream source "
+        "(RTSP or HLS URL). Any field may be omitted to leave it unchanged. "
+        "Set source_type to null to clear the stream source."
     ),
     response_description="The updated station.",
     responses={
@@ -69,20 +73,34 @@ async def create_station(body: StationCreate):
         409: {"description": "The new name is already taken by another station."},
     },
 )
-async def rename_station(station_id: str, body: StationRename):
+async def update_station(station_id: str, body: StationUpdate):
     db = get_db()
     try:
         oid = ObjectId(station_id)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid station id")
 
-    conflict = await db.stations.find_one({"name": body.name, "_id": {"$ne": oid}})
-    if conflict:
-        raise HTTPException(status_code=409, detail="Station name already exists")
+    update_fields: dict = {}
+
+    if body.name is not None:
+        conflict = await db.stations.find_one({"name": body.name, "_id": {"$ne": oid}})
+        if conflict:
+            raise HTTPException(status_code=409, detail="Station name already exists")
+        update_fields["name"] = body.name
+
+    for field in ("source_type", "rtsp_url", "hls_url"):
+        if field in body.model_fields_set:
+            update_fields[field] = getattr(body, field)
+
+    if not update_fields:
+        doc = await db.stations.find_one({"_id": oid})
+        if not doc:
+            raise HTTPException(status_code=404, detail="Station not found")
+        return _station_out(doc)
 
     result = await db.stations.find_one_and_update(
         {"_id": oid},
-        {"$set": {"name": body.name}},
+        {"$set": update_fields},
         return_document=True,
     )
     if not result:
