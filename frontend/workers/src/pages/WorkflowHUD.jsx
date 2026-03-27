@@ -20,9 +20,11 @@ const API_URL =
   import.meta.env.VITE_API_URL ||
   'http://localhost:8001';
 
-const DEFAULT_TIMESTAMP_URL =
-  import.meta.env.VITE_TIMESTAMP_URL ||
-  'http://localhost:5051/position';
+const AI_URL =
+  import.meta.env.VITE_AI_URL ||
+  'http://localhost:8000';
+
+const AI_STATION = 'FINAL_QC_ASSEMBLY';
 
 // Normalize a backend SOP step to the shape the UI components expect
 const normalizeSopStep = (s) => ({
@@ -34,7 +36,7 @@ const normalizeSopStep = (s) => ({
 
 export default function WorkflowHUD() {
   const { stationName } = useParams();
-  const { configureWorkflow, triggerSafetyToast } = useWorkflow();
+  const { configureWorkflow, triggerSafetyToast, enableAiMode } = useWorkflow();
 
   const [station, setStation] = useState(null);   // null=resolving | false=not found | object
   const [isStreamOnline, setIsStreamOnline] = useState(null); // null=checking | true | false
@@ -89,6 +91,25 @@ export default function WorkflowHUD() {
           }
           setSopSteps(steps);
           configureWorkflow(steps, station.name, false);
+
+          // Send SOP to AI and open SSE when this is the AI-monitored station
+          if (station.name === AI_STATION && steps.length > 0) {
+            try {
+              const aiPayload = steps.map((s) => ({
+                title: s.title,
+                instructions: s.instructions ?? [],
+                safety: s.safety ?? [],
+              }));
+              const aiRes = await fetch(`${AI_URL}/sop`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(aiPayload),
+              });
+              if (aiRes.ok) enableAiMode();
+            } catch {
+              // AI unreachable — fall back to dev-polling
+            }
+          }
         } catch {
           setSopSteps([]);
           configureWorkflow([], station.name, false);
@@ -102,7 +123,7 @@ export default function WorkflowHUD() {
     configureWorkflow(hcJsonSteps, station.name, true);
 
     const safetyTimers = [];
-    const tsUrl = station.timestamp_url || DEFAULT_TIMESTAMP_URL;
+    const tsUrl = station.timestamp_url;
 
     const checkStream = async () => {
       let streamSeconds = 0;
@@ -202,7 +223,7 @@ export default function WorkflowHUD() {
             </div>
             <div className="w-full p-4 rounded-xl border border-white/5 bg-white/[0.02] flex items-center gap-3">
               <div className="w-2 h-2 bg-error rounded-full flex-shrink-0" />
-              <span className="font-mono text-xs text-white/30 truncate">{station.timestamp_url || DEFAULT_TIMESTAMP_URL}</span>
+              <span className="font-mono text-xs text-white/30 truncate">{station.timestamp_url ?? 'timestamp_url not configured'}</span>
             </div>
             <button onClick={retryStreamCheck} className="px-8 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 font-headline font-bold text-sm uppercase tracking-[0.2em] text-white/60 hover:text-white transition-all duration-200">
               Retry

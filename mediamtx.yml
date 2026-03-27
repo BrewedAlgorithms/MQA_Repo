@@ -2,16 +2,15 @@
 # Reduces HLS end-to-end lag from ~6 s (default) to ~1-2 s.
 
 # ── HLS ────────────────────────────────────────────────────────────────────────
-# Each segment is 0.5 s (default: 2 s).  Browsers can start playback sooner
-# and stay closer to the live edge.
+# Each segment is 0.5 s (default: 2 s). Browsers can start playback sooner.
 hlsSegmentDuration: 0.5s
 
-# Keep only 3 segments in the playlist (default: 7).
-# Fewer segments = smaller initial buffer the browser fills before playback.
-hlsSegmentCount: 3
+# Keep 7 segments in the playlist — minimum required for stable HLS delivery.
+# 7 × 0.5 s = 3.5 s of buffer; latency stays around 1–1.5 s at the live edge.
+hlsSegmentCount: 7
 
-# LL-HLS partial segment duration (sub-part chunks for near-real-time delivery).
-hlsPartDuration: 0.2s
+# Allow browsers to fetch HLS manifests and segments cross-origin.
+hlsAllowOrigin: '*'
 
 # Bind addresses (keep defaults – mapped via docker-compose ports).
 rtspAddress: :8554

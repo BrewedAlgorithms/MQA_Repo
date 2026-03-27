@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 const WorkflowContext = createContext();
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+const AI_URL  = import.meta.env.VITE_AI_URL  || 'http://localhost:8000';
 
 export function WorkflowProvider({ children }) {
   const [config, setConfig] = useState({
@@ -14,7 +15,17 @@ export function WorkflowProvider({ children }) {
   const [currentStepId, setCurrentStepId] = useState(1);
   const [isWorkflowCompleted, setIsWorkflowCompleted] = useState(false);
 
-  // Local safety toast — triggered programmatically by HC schedule
+  // AI SSE mode — active when FINAL_QC_ASSEMBLY station sends SOP to AI
+  const [aiMode, setAiMode] = useState(false);
+  const enableAiMode = useCallback(() => setAiMode(true), []);
+
+  // Keep a ref so SSE listeners always see the current total steps
+  const totalStepsRef = useRef(0);
+  useEffect(() => {
+    totalStepsRef.current = config.steps.length;
+  }, [config.steps.length]);
+
+  // Local safety toast — triggered programmatically by HC schedule or AI SSE
   const [localToast, setLocalToast] = useState({ message: null, ts: null });
   const triggerSafetyToast = useCallback((message) => {
     setLocalToast({ message, ts: Date.now().toString() });
@@ -26,9 +37,36 @@ export function WorkflowProvider({ children }) {
     setIsWorkflowCompleted(false);
   }, []);
 
-  // Non-HC: poll /dev/{stationName}/step every second
+  // AI SSE: when aiMode is active, open EventSource to AI /stream
   useEffect(() => {
-    if (config.isHc || !config.stationName || config.steps.length === 0) return;
+    if (!aiMode) return;
+
+    const es = new EventSource(`${AI_URL}/stream`);
+
+    es.addEventListener('current_step', (e) => {
+      const step = parseInt(e.data, 10);
+      if (!isNaN(step)) {
+        const total = totalStepsRef.current;
+        if (total > 0 && step > total) {
+          setIsWorkflowCompleted(true);
+          setCurrentStepId(total);
+        } else {
+          setIsWorkflowCompleted(false);
+          setCurrentStepId(Math.max(1, step));
+        }
+      }
+    });
+
+    es.addEventListener('safety_err', (e) => {
+      if (e.data?.trim()) triggerSafetyToast(e.data.trim());
+    });
+
+    return () => es.close();
+  }, [aiMode]);
+
+  // Non-HC: poll /dev/{stationName}/step every second (skipped when AI SSE is active)
+  useEffect(() => {
+    if (config.isHc || !config.stationName || config.steps.length === 0 || aiMode) return;
 
     const poll = async () => {
       try {
@@ -65,6 +103,8 @@ export function WorkflowProvider({ children }) {
       localToast,
       isHc: config.isHc,
       stationName: config.stationName,
+      aiMode,
+      enableAiMode,
     }}>
       {children}
     </WorkflowContext.Provider>

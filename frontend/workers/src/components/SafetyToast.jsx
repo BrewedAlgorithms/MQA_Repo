@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
 const SHOW_MS = 5000;
 
 export default function SafetyToast() {
-  const { stationName, localToast } = useWorkflow();
+  const { stationName, localToast, aiMode } = useWorkflow();
   const [message, setMessage] = useState(null);
   const [progress, setProgress] = useState(100);
 
@@ -40,9 +40,9 @@ export default function SafetyToast() {
     showToast(localToast.message);
   }, [localToast?.ts]);
 
-  // ── Backend polling (/dev/{name}/safetyerr) ───────────────────────────────────
+  // ── Backend polling (/dev/{name}/safetyerr) — skipped when AI SSE is active ──
   useEffect(() => {
-    if (!stationName) return;
+    if (!stationName || aiMode) return;
 
     const seed = async () => {
       try {

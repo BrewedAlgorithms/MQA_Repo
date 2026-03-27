@@ -2,68 +2,90 @@ import React, { useState, useEffect, useRef } from 'react';
 import Hls from 'hls.js';
 import { useWorkflow } from '../context/WorkflowContext';
 
-const DEFAULT_STREAM_URL =
-  import.meta.env.VITE_STREAM_URL || 'http://localhost:8888/live/index.m3u8';
-
-const DEFAULT_TIMESTAMP_URL =
-  import.meta.env.VITE_TIMESTAMP_URL || 'http://localhost:5051/position';
-
 // HLS adds latency between what the streamer writes and what the viewer sees.
 // This offset delays step transitions to match the viewer's actual playback.
 const HLS_LAG_SECONDS = 3;
 
+const RETRY_INTERVAL_MS = 5000;
+
 export default function LiveFeedPopup({ streamUrl, stationName, timestampUrl, hc = false }) {
-  const STREAM_URL = streamUrl || DEFAULT_STREAM_URL;
-  const TIMESTAMP_URL = timestampUrl || DEFAULT_TIMESTAMP_URL;
+  const STREAM_URL = streamUrl;
+  const TIMESTAMP_URL = timestampUrl;
   const { currentStepId, setCurrentStepId, workflowSteps, setIsWorkflowCompleted } = useWorkflow();
   const [liveTime, setLiveTime] = useState('0:00');
   const [streamError, setStreamError] = useState(false);
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
+  const retryTimerRef = useRef(null);
   // Track latest elapsed seconds from the video (not wall-clock)
   const elapsedRef = useRef(0);
 
-  // ── HLS player setup ────────────────────────────────────────────────────────
+  // ── HLS player setup with auto-retry ────────────────────────────────────────
   useEffect(() => {
+    if (!STREAM_URL) return;
+
     const video = videoRef.current;
     if (!video) return;
 
     let hls;
+    let destroyed = false;
 
-    if (Hls.isSupported()) {
-      hls = new Hls({
-        lowLatencyMode: true,
-        liveSyncDurationCount: 1,
-        liveMaxLatencyDurationCount: 2,
-        // Cap how much video the browser buffers ahead (keeps playback at the live edge)
-        maxBufferLength: 1,
-        maxMaxBufferLength: 2,
-      });
-      hlsRef.current = hls;
-      hls.loadSource(STREAM_URL);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {});
-        setStreamError(false);
-      });
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) setStreamError(true);
-      });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Safari native HLS
-      video.src = STREAM_URL;
-      video.addEventListener('loadedmetadata', () => {
-        video.play().catch(() => {});
-        setStreamError(false);
-      });
-      video.addEventListener('error', () => setStreamError(true));
-    } else {
-      setStreamError(true);
-    }
+    const attach = () => {
+      if (destroyed) return;
+      clearTimeout(retryTimerRef.current);
+
+      if (Hls.isSupported()) {
+        if (hlsRef.current) {
+          hlsRef.current.destroy();
+          hlsRef.current = null;
+        }
+        hls = new Hls({
+          liveSyncDurationCount: 2,
+          liveMaxLatencyDurationCount: 4,
+          maxBufferLength: 4,
+          maxMaxBufferLength: 8,
+        });
+        hlsRef.current = hls;
+        hls.loadSource(STREAM_URL);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          if (destroyed) return;
+          video.play().catch(() => {});
+          setStreamError(false);
+        });
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (destroyed || !data.fatal) return;
+          setStreamError(true);
+          hls.destroy();
+          hlsRef.current = null;
+          retryTimerRef.current = setTimeout(attach, RETRY_INTERVAL_MS);
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari native HLS — reassign src to retrigger load
+        video.src = STREAM_URL;
+        video.load();
+        video.addEventListener('loadedmetadata', () => {
+          if (destroyed) return;
+          video.play().catch(() => {});
+          setStreamError(false);
+        }, { once: true });
+        video.addEventListener('error', () => {
+          if (destroyed) return;
+          setStreamError(true);
+          retryTimerRef.current = setTimeout(attach, RETRY_INTERVAL_MS);
+        }, { once: true });
+      } else {
+        setStreamError(true);
+      }
+    };
+
+    attach();
 
     return () => {
-      if (hls) {
-        hls.destroy();
+      destroyed = true;
+      clearTimeout(retryTimerRef.current);
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
         hlsRef.current = null;
       }
     };
