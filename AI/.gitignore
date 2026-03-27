@@ -1,0 +1,16 @@
+.env
+.venv/
+venv/
+.vscode/
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+/yolov8n.pt
+src/yolov8n.pt
+*.pt
+*.task
+
+Media/
