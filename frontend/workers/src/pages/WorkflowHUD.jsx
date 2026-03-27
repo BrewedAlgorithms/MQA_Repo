@@ -5,6 +5,7 @@ import ProcessList from '../components/ProcessList';
 import MainCarousel from '../components/MainCarousel';
 import AgentListening from '../components/AgentListening';
 import SafetyToast from '../components/SafetyToast';
+import PipelineToggle from '../components/PipelineToggle';
 import { useParams, Link } from 'react-router-dom';
 import { steps as hcJsonSteps, safetyerrs as hcSafetyErrs } from '../data/hc_vid1.json';
 import { useWorkflow } from '../context/WorkflowContext';
@@ -88,10 +89,10 @@ export default function WorkflowHUD() {
               .map(normalizeSopStep);
           }
           setSopSteps(steps);
-          configureWorkflow(steps, station.name, false);
+          configureWorkflow(steps, station.name, false, station.id);
         } catch {
           setSopSteps([]);
-          configureWorkflow([], station.name, false);
+          configureWorkflow([], station.name, false, station.id);
         }
       };
       loadSop();
@@ -99,7 +100,7 @@ export default function WorkflowHUD() {
     }
 
     // ── HC (video file stream) ────────────────────────────────────────────────
-    configureWorkflow(hcJsonSteps, station.name, true);
+    configureWorkflow(hcJsonSteps, station.name, true, station.id);
 
     const safetyTimers = [];
     const tsUrl = station.timestamp_url || DEFAULT_TIMESTAMP_URL;
@@ -266,6 +267,7 @@ export default function WorkflowHUD() {
       <MainCarousel />
       <AgentListening />
       <SafetyToast />
+      {!station.hc && <PipelineToggle stationId={station.id} />}
     </div>
   );
 }

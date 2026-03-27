@@ -6,17 +6,25 @@
 # and stay closer to the live edge.
 hlsSegmentDuration: 0.5s
 
-# Keep only 3 segments in the playlist (default: 7).
+# Keep only 7 segments in the playlist (default: 7).
 # Fewer segments = smaller initial buffer the browser fills before playback.
-hlsSegmentCount: 3
+hlsSegmentCount: 7
 
 # LL-HLS partial segment duration (sub-part chunks for near-real-time delivery).
 hlsPartDuration: 0.2s
+
+# Always generate HLS streams, even if no client is connected.
+# This prevents the frontend from getting a 404 on the first request.
+hlsAlwaysRemux: yes
 
 # Bind addresses (keep defaults – mapped via docker-compose ports).
 rtspAddress: :8554
 hlsAddress: :8888
 webrtcAddress: :8889
 
-# Force TCP transport (matches MTX_PROTOCOLS=tcp env var in docker-compose).
-rtspProtocols: [tcp]
+# Force TCP transport (renamed to rtspTransports in MediaMTX v1.17.0).
+rtspTransports: [tcp]
+
+paths:
+  all:
+

@@ -54,7 +54,7 @@ SOP Text:
 {sop_text}
 ---"""
 
-    completion = await _openai.beta.chat.completions.parse(
+    completion = await _openai.chat.completions.parse(
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "You are a helpful assistant that outputs structured SOP steps as JSON."},
