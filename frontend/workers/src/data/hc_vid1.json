@@ -1,4 +1,28 @@
 {
+  "safety": [
+    {
+      "id": 1,
+      "title": "Helmet",
+      "subtitle": "Head protection integrity checked",
+      "icon": "construction",
+      "instructions": [
+        "Wear a helmet to protect your head."
+      ],
+      "startTime": "0:00",
+      "endTime": "0:05"
+    },
+    {
+      "id": 2,
+      "title": "Gloves",
+      "subtitle": "Tactile protection confirmed",
+      "icon": "front_hand",
+      "instructions": [
+        "Wear gloves to protect your hands."
+      ],
+      "startTime": "0:05",
+      "endTime": "0:10"
+    }
+  ],
   "steps": [
     {
       "id": 1,

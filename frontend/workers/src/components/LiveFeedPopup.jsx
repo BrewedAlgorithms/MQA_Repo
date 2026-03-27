@@ -12,7 +12,7 @@ const DEFAULT_TIMESTAMP_URL =
 // This offset delays step transitions to match the viewer's actual playback.
 const HLS_LAG_SECONDS = 3;
 
-export default function LiveFeedPopup({ streamUrl, stationName, timestampUrl }) {
+export default function LiveFeedPopup({ streamUrl, stationName, timestampUrl, hc = false }) {
   const STREAM_URL = streamUrl || DEFAULT_STREAM_URL;
   const TIMESTAMP_URL = timestampUrl || DEFAULT_TIMESTAMP_URL;
   const { currentStepId, setCurrentStepId, workflowSteps, setIsWorkflowCompleted } = useWorkflow();
@@ -69,8 +69,11 @@ export default function LiveFeedPopup({ streamUrl, stationName, timestampUrl }) 
     };
   }, [STREAM_URL]);
 
-  // ── Poll /position + drive step progression in one loop (no drift) ──────────
+  // ── Poll /position + drive step progression (HC only) ───────────────────────
   useEffect(() => {
+    // Non-HC stations (webcam) do not have meaningful position data — skip polling.
+    if (!hc) return;
+
     const timeToSeconds = (t) => {
       if (!t) return 0;
       const [m, s] = t.split(':').map(Number);
@@ -105,7 +108,7 @@ export default function LiveFeedPopup({ streamUrl, stationName, timestampUrl }) 
     tick(); // immediate first run
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [TIMESTAMP_URL, workflowSteps, currentStepId, setCurrentStepId, setIsWorkflowCompleted]);
+  }, [hc, TIMESTAMP_URL, workflowSteps, currentStepId, setCurrentStepId, setIsWorkflowCompleted]);
 
   return (
     <div className="fixed top-8 left-8 z-50 w-72 h-48 bg-surface-container-high rounded-xl border border-white/10 overflow-hidden shadow-2xl group">
@@ -134,10 +137,12 @@ export default function LiveFeedPopup({ streamUrl, stationName, timestampUrl }) 
         <span className="text-[10px] font-bold tracking-widest text-white uppercase drop-shadow-md">{stationName ?? 'Cam A'}</span>
       </div>
 
-      {/* Video timestamp from streamer */}
-      <div className="absolute top-3 right-3 z-20 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded border border-white/10">
-        <span className="text-[10px] font-mono font-bold text-white tracking-widest">{liveTime}</span>
-      </div>
+      {/* Video timestamp — only shown for HC (video file) stations */}
+      {hc && (
+        <div className="absolute top-3 right-3 z-20 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded border border-white/10">
+          <span className="text-[10px] font-mono font-bold text-white tracking-widest">{liveTime}</span>
+        </div>
+      )}
 
       <div className="absolute bottom-3 right-3 z-20">
         <span className="text-[10px] font-mono text-primary/80">LIVE // HLS</span>

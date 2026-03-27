@@ -189,6 +189,7 @@ def _track_file_position(duration: float, stop: threading.Event) -> None:
 def stream_file(video_path: str, rtsp_url: str, stream_name: str,
                 timestamp_port: int) -> None:
     duration = get_video_duration(video_path)
+    gop = OUTPUT_FPS  # one keyframe per second
 
     cmd = [
         "ffmpeg",
@@ -196,17 +197,23 @@ def stream_file(video_path: str, rtsp_url: str, stream_name: str,
         "-stream_loop", "-1",
         "-re",
         "-i", video_path,
+        # Enforce a strict, constant output frame rate — matches webcam mode.
+        "-vf", f"fps={OUTPUT_FPS}",
         "-c:v", "libx264",
         "-preset", "ultrafast",
         "-tune", "zerolatency",
         "-pix_fmt", "yuv420p",
+        "-r", str(OUTPUT_FPS),
+        "-g", str(gop),
+        "-keyint_min", str(gop),
+        "-sc_threshold", "0",
         "-an",
         "-f", "rtsp",
         "-rtsp_transport", "tcp",
         rtsp_url,
     ]
 
-    print(f"\n[INFO] Streaming video file '{video_path}'")
+    print(f"\n[INFO] Streaming video file '{video_path}' @ {OUTPUT_FPS} fps")
     print(f"[INFO] RTSP      → {rtsp_url}")
     print(f"[INFO] HLS       → http://{MEDIAMTX_HOST}:8888/{stream_name}/index.m3u8")
     print(f"[INFO] Timestamp → http://localhost:{timestamp_port}/position")
@@ -260,11 +267,13 @@ def open_webcam(index: int, timeout: float = 10.0) -> cv2.VideoCapture:
     return cap
 
 
-# ── Webcam streaming (OpenCV → FFmpeg stdin pipe) ──────────────────────────────
-# Fixed output rate: 2 fps.  A background thread reads the webcam at its native
-# rate (draining the internal buffer), so the writer always gets the freshest
-# frame with no blocking drain overhead.
-WEBCAM_OUTPUT_FPS = 30
+# Shared output frame rate for both streaming modes.
+# Both video-file and webcam output exactly this many frames per second so HLS
+# segment lengths and GOP sizes stay consistent across all stations.
+OUTPUT_FPS = 30
+
+# Keep the old name as an alias so nothing else needs to change.
+WEBCAM_OUTPUT_FPS = OUTPUT_FPS
 
 
 def stream_webcam(capture: cv2.VideoCapture, rtsp_url: str, stream_name: str,
