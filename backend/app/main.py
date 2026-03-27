@@ -4,7 +4,7 @@ from fastapi.openapi.utils import get_openapi
 from contextlib import asynccontextmanager
 
 from app.database import connect_db, close_db
-from app.routes import stations, sop
+from app.routes import stations, sop, dev
 
 
 @asynccontextmanager
@@ -82,6 +82,7 @@ app.add_middleware(
 
 app.include_router(stations.router)
 app.include_router(sop.router)
+app.include_router(dev.router)
 
 
 @app.get(

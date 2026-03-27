@@ -1,26 +1,9 @@
 {
-  "safety": [
+  "safetyerrs": [
     {
-      "id": 1,
-      "title": "Helmet",
-      "subtitle": "Head protection integrity checked",
-      "icon": "construction",
-      "instructions": [
-        "Wear a helmet to protect your head."
-      ],
+      "message": "Please wear gloves",
       "startTime": "0:00",
-      "endTime": "0:05"
-    },
-    {
-      "id": 2,
-      "title": "Gloves",
-      "subtitle": "Tactile protection confirmed",
-      "icon": "front_hand",
-      "instructions": [
-        "Wear gloves to protect your hands."
-      ],
-      "startTime": "0:05",
-      "endTime": "0:10"
+      "endTime": "0:15"
     }
   ],
   "steps": [
@@ -30,6 +13,7 @@
       "instructions": [
         "Clean the door surface using a dry wiping cloth to remove dust."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "0:24",
       "endTime": "0:41"
     },
@@ -39,6 +23,7 @@
       "instructions": [
         "Apply IP solution to the wiping cloth."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "0:53",
       "endTime": "1:02"
     },
@@ -48,6 +33,7 @@
       "instructions": [
         "Thoroughly wipe the door surface with the wet cloth."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "0:59",
       "endTime": "1:14"
     },
@@ -57,6 +43,7 @@
       "instructions": [
         "Thoroughly wipe the door surface with the dry cloth."
       ],
+      "safety": ["Helmet"],
       "startTime": "1:30",
       "endTime": "1:57"
     },
@@ -66,6 +53,7 @@
       "instructions": [
         "Place the wiping cloth back into the cabinet and close it."
       ],
+      "safety": ["Helmet"],
       "startTime": "1:14",
       "endTime": "2:04"
     },
@@ -75,6 +63,7 @@
       "instructions": [
         "Pick up the grommet."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "2:05",
       "endTime": "2:13"
     },
@@ -84,6 +73,7 @@
       "instructions": [
         "Secure the grommet onto the designated position on the door."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "2:20",
       "endTime": "2:33"
     },
@@ -93,6 +83,7 @@
       "instructions": [
         "Retrieve the primary seal from the storage area."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "2:50",
       "endTime": "2:56"
     },
@@ -102,6 +93,7 @@
       "instructions": [
         "Clean the primary seal thoroughly."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "2:57",
       "endTime": "3:22"
     },
@@ -111,6 +103,7 @@
       "instructions": [
         "Properly seat the seal into the clamp assembly."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "3:28",
       "endTime": "3:31"
     },
@@ -120,6 +113,7 @@
       "instructions": [
         "Remove the backing tape and attach the seal to the door."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "5:28",
       "endTime": "5:41"
     },
@@ -129,6 +123,7 @@
       "instructions": [
         "Apply firm pressure on the seal using both hands for secure adhesion."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "5:30",
       "endTime": "6:02"
     },
@@ -138,6 +133,7 @@
       "instructions": [
         "Carefully remove the grommet from the door."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "6:01",
       "endTime": "6:09"
     },
@@ -147,6 +143,7 @@
       "instructions": [
         "Pick up the pressing tool."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "6:26",
       "endTime": "6:33"
     },
@@ -156,6 +153,7 @@
       "instructions": [
         "Use the tool to press the upper section of the seal."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "6:33",
       "endTime": "7:21"
     },
@@ -165,6 +163,7 @@
       "instructions": [
         "Rotate the trolley handle to adjust the door position."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "7:00",
       "endTime": "7:32"
     },
@@ -174,6 +173,7 @@
       "instructions": [
         "Use the tool to press the lower section of the seal."
       ],
+      "safety": ["Helmet", "Gloves"],
       "startTime": "7:26",
       "endTime": "8:18"
     }

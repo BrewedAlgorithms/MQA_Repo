@@ -360,21 +360,30 @@ export default function ManageStations() {
                           </div>
                         )}
 
-                        {/* Timestamp URL */}
-                        {editSourceType !== 'none' && (
-                          <div>
-                            <label className="font-label text-[10px] text-on-surface-variant uppercase tracking-widest block mb-1.5">
-                              Timestamp URL <span className="text-primary normal-case">(streamer.py /position endpoint)</span>
+                        {/* Timestamp URL — always visible for HC, also shown for any non-none source */}
+                        {(editHc || editSourceType !== 'none') && (
+                          <div className={editHc ? 'border border-secondary/30 bg-secondary/5 p-3 rounded' : ''}>
+                            <label className="font-label text-[10px] uppercase tracking-widest block mb-1.5 flex items-center gap-2">
+                              <span className={editHc ? 'text-secondary' : 'text-on-surface-variant'}>
+                                Timestamp URL
+                              </span>
+                              {editHc && (
+                                <span className="text-secondary/70 normal-case font-label text-[10px]">
+                                  — required for HC (video file) step sync
+                                </span>
+                              )}
                             </label>
                             <input
                               type="text"
                               value={editTimestampUrl}
                               onChange={e => setEditTimestampUrl(e.target.value)}
                               placeholder="http://localhost:5051/position"
-                              className="w-full bg-surface-container-highest text-on-surface font-mono px-4 py-2.5 border border-outline-variant outline-none focus:border-primary text-xs"
+                              className={`w-full bg-surface-container-highest text-on-surface font-mono px-4 py-2.5 border outline-none text-xs focus:border-primary ${
+                                editHc ? 'border-secondary/40' : 'border-outline-variant'
+                              }`}
                             />
                             <p className="mt-1.5 text-[10px] text-on-surface-variant font-label">
-                              Check streamer.py output for the actual port — it increments if 5051 is already in use.
+                              Check streamer.py startup output for the actual port — it increments if 5051 is already in use (e.g. <span className="font-mono">http://localhost:5052/position</span>).
                             </p>
                           </div>
                         )}

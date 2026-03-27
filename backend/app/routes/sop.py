@@ -30,8 +30,9 @@ _openai = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class _ExtractedStep(BaseModel):
     title: str = Field(description="Short action title, e.g. 'Check Seal Integrity'")
-    description: str = Field(description="Detailed description of what needs to be done in this step")
+    description: str = Field(description="Single imperative instruction for the worker. Must be under 30 words. No filler phrases.")
     requires: List[str] = Field(default=[], description="Exact 'title' strings of prerequisite steps")
+    safety: List[str] = Field(default=[], description="Required PPE/safety items for this step. Use only standard names such as 'Helmet', 'Gloves', 'Safety Glasses', 'Steel-toed Boots', 'Hi-Vis Vest'. Empty list if no PPE is required.")
 
 
 class _ExtractedSOP(BaseModel):
@@ -44,8 +45,9 @@ Read the SOP text below and extract every step as a structured list.
 
 For each step provide:
 - title: a short, clear action name (e.g. "Visual inspection", "Torque calibration")
-- description: a concise but complete description of exactly what must be done
+- description: a single, imperative instruction telling the worker exactly what to do. MUST be under 30 words. Be direct and specific — no filler phrases like "ensure that" or "make sure to".
 - requires: array of exact 'title' strings of steps that must be completed before this one (empty if none)
+- safety: array of required PPE/safety equipment names for this step. Use only standard names: "Helmet", "Gloves", "Safety Glasses", "Steel-toed Boots", "Hi-Vis Vest". Empty array if no PPE is needed for this step.
 
 SOP Text:
 ---
@@ -135,6 +137,7 @@ async def upload_sop(
             title=s.title,
             description=s.description,
             requires=s.requires,
+            safety=s.safety,
         )
         for idx, s in enumerate(extracted)
     ]
@@ -200,6 +203,7 @@ async def process_sop(body: SopProcessRequest):
             title=s.title,
             description=s.description,
             requires=s.requires,
+            safety=s.safety,
         )
         for idx, s in enumerate(extracted)
     ]
@@ -290,6 +294,7 @@ async def add_step(sop_id: str, body: SopStepCreate):
         order=len(steps) + 1,
         title=body.title,
         description=body.description,
+        safety=body.safety,
     )
     steps.append(new_step.model_dump())
 
@@ -336,6 +341,8 @@ async def update_step(sop_id: str, step_id: str, body: SopStepUpdate):
                 step["title"] = body.title
             if body.description is not None:
                 step["description"] = body.description
+            if body.safety is not None:
+                step["safety"] = body.safety
             found = True
             break
 

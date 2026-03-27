@@ -65,6 +65,18 @@ export default function MainCarousel() {
               </p>
             ))}
           </div>
+
+          {/* Safety requirements */}
+          {currentStepData.safety?.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-4 pt-4 border-t border-white/5">
+              {currentStepData.safety.map(item => (
+                <span key={item} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-widest">
+                  <span className="material-symbols-outlined text-[12px]" style={{ fontVariationSettings: "'FILL' 1" }}>shield</span>
+                  {item}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right Card (Next) */}

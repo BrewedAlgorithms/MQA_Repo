@@ -85,17 +85,20 @@ class SopStep(BaseModel):
     title: str = Field(..., description="Short action title.", examples=["Check Seal Integrity"])
     description: str = Field(..., description="Full description of what must be done.", examples=["Inspect secondary gasket layer for micro-fissures or pressure deviations."])
     requires: List[str] = Field(default=[], description="Titles of prerequisite steps that must be completed first.", examples=[[]])
+    safety: List[str] = Field(default=[], description="Required PPE/safety items for this step, e.g. ['Helmet', 'Gloves'].", examples=[["Helmet", "Gloves"]])
 
 
 class SopStepCreate(BaseModel):
     title: str = Field(..., min_length=1, description="Short action title for the new step.", examples=["Final Visual Pass"])
     description: str = Field(default="", description="Detailed description of what must be done.", examples=["High-resolution optical scan for surface defects or FOD."])
+    safety: List[str] = Field(default=[], description="Required PPE/safety items for this step.", examples=[["Helmet", "Gloves"]])
 
     model_config = {
         "json_schema_extra": {
             "example": {
                 "title": "Final Visual Pass",
                 "description": "High-resolution optical scan for surface defects or left-behind FOD.",
+                "safety": ["Helmet", "Gloves"],
             }
         }
     }
@@ -104,12 +107,14 @@ class SopStepCreate(BaseModel):
 class SopStepUpdate(BaseModel):
     title: Optional[str] = Field(default=None, min_length=1, description="Updated step title. Omit to leave unchanged.", examples=["Torque Calibration"])
     description: Optional[str] = Field(default=None, description="Updated step description. Omit to leave unchanged.", examples=["Apply 14.5 Nm to the primary intake housing bolts."])
+    safety: Optional[List[str]] = Field(default=None, description="Replacement PPE/safety list. Omit to leave unchanged.", examples=[["Helmet"]])
 
     model_config = {
         "json_schema_extra": {
             "example": {
                 "title": "Torque Calibration",
                 "description": "Apply precise force of 14.5 Nm to the primary intake housing bolts.",
+                "safety": ["Helmet"],
             }
         }
     }

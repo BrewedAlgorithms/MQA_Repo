@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { sopApi } from '../../services/api';
 
+const SUGGESTED_SAFETY = ['Helmet', 'Gloves', 'Safety Glasses', 'Steel-toed Boots', 'Hi-Vis Vest'];
+
 // ── Save-status badge ──────────────────────────────────────────────────────────
 function SaveBadge({ status, updatedAt }) {
   if (status === 'saving') {
@@ -26,10 +28,92 @@ function SaveBadge({ status, updatedAt }) {
   );
 }
 
+// ── Safety tag input ───────────────────────────────────────────────────────────
+function SafetyTagInput({ value, onChange }) {
+  const [input, setInput] = useState('');
+
+  const addTag = (tag) => {
+    const trimmed = tag.trim();
+    if (!trimmed || value.includes(trimmed)) return;
+    onChange([...value, trimmed]);
+    setInput('');
+  };
+
+  const removeTag = (tag) => onChange(value.filter(t => t !== tag));
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(input);
+    } else if (e.key === 'Backspace' && !input && value.length > 0) {
+      removeTag(value[value.length - 1]);
+    }
+  };
+
+  const suggestions = SUGGESTED_SAFETY.filter(s => !value.includes(s));
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-1.5 min-h-[36px] bg-surface-container-low border border-outline-variant focus-within:border-primary px-2 py-1.5">
+        {value.map(tag => (
+          <span key={tag} className="flex items-center gap-1 bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 text-[10px] font-label font-bold uppercase tracking-widest">
+            <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>shield</span>
+            {tag}
+            <button
+              type="button"
+              onClick={() => removeTag(tag)}
+              className="ml-0.5 opacity-60 hover:opacity-100 transition-opacity"
+            >
+              <span className="material-symbols-outlined text-[10px]">close</span>
+            </button>
+          </span>
+        ))}
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={value.length === 0 ? 'Type safety item, press Enter…' : ''}
+          className="flex-1 min-w-[120px] bg-transparent text-on-surface font-body text-xs outline-none placeholder:text-on-surface-variant/40"
+        />
+      </div>
+      {suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {suggestions.map(s => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => addTag(s)}
+              className="px-2 py-0.5 text-[10px] font-label uppercase tracking-widest text-on-surface-variant border border-outline-variant hover:border-primary hover:text-primary transition-colors"
+            >
+              + {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Safety badge (read-only display) ──────────────────────────────────────────
+function SafetyBadges({ items }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1 mt-2">
+      {items.map(tag => (
+        <span key={tag} className="flex items-center gap-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 text-[9px] font-label font-bold uppercase tracking-widest">
+          <span className="material-symbols-outlined text-[9px]" style={{ fontVariationSettings: "'FILL' 1" }}>shield</span>
+          {tag}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 // ── Inline edit row ────────────────────────────────────────────────────────────
 function EditRow({ step, sopId, onSaved, onCancel, onMutating }) {
   const [title, setTitle] = useState(step.title);
   const [desc, setDesc] = useState(step.description);
+  const [safety, setSafety] = useState(step.safety ?? []);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -39,7 +123,7 @@ function EditRow({ step, sopId, onSaved, onCancel, onMutating }) {
     setError(null);
     onMutating(true);
     try {
-      const updated = await sopApi.updateStep(sopId, step.step_id, title.trim(), desc.trim());
+      const updated = await sopApi.updateStep(sopId, step.step_id, title.trim(), desc.trim(), safety);
       onSaved(updated);
     } catch (e) {
       setError(e.message);
@@ -64,6 +148,10 @@ function EditRow({ step, sopId, onSaved, onCancel, onMutating }) {
         rows={2}
         className="bg-surface-container-low text-on-surface font-body px-3 py-2 border border-outline-variant outline-none focus:border-primary text-sm resize-none"
       />
+      <div>
+        <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1.5">Safety Requirements</p>
+        <SafetyTagInput value={safety} onChange={setSafety} />
+      </div>
       {error && <p className="text-[10px] font-label text-error uppercase">{error}</p>}
       <div className="flex gap-2">
         <button
@@ -89,6 +177,7 @@ function EditRow({ step, sopId, onSaved, onCancel, onMutating }) {
 function AddStepRow({ sopId, onAdded, onCancel, onMutating }) {
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
+  const [safety, setSafety] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -98,7 +187,7 @@ function AddStepRow({ sopId, onAdded, onCancel, onMutating }) {
     setError(null);
     onMutating(true);
     try {
-      const updated = await sopApi.addStep(sopId, title.trim(), desc.trim());
+      const updated = await sopApi.addStep(sopId, title.trim(), desc.trim(), safety);
       onAdded(updated);
     } catch (e) {
       setError(e.message);
@@ -125,6 +214,10 @@ function AddStepRow({ sopId, onAdded, onCancel, onMutating }) {
         rows={2}
         className="bg-surface-container-low text-on-surface font-body px-3 py-2 border border-outline-variant outline-none focus:border-primary text-sm resize-none"
       />
+      <div>
+        <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1.5">Safety Requirements</p>
+        <SafetyTagInput value={safety} onChange={setSafety} />
+      </div>
       {error && <p className="text-[10px] font-label text-error uppercase">{error}</p>}
       <div className="flex gap-2">
         <button
@@ -154,11 +247,9 @@ export default function ExtractedSteps({ sop, sopLoading, onSopUpdated }) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Save-status tracking
-  const [saveStatus, setSaveStatus] = useState('saved'); // 'saved' | 'saving'
+  const [saveStatus, setSaveStatus] = useState('saved');
   const saveTimer = useRef(null);
 
-  // Whenever sop.updated_at changes, flip back to 'saved'
   useEffect(() => {
     if (!sop) return;
     clearTimeout(saveTimer.current);
@@ -206,9 +297,7 @@ export default function ExtractedSteps({ sop, sopLoading, onSopUpdated }) {
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
-          {/* Saved badge — only when a SOP is loaded and not re-fetching */}
           {sop && !sopLoading && <SaveBadge status={saveStatus} updatedAt={sop.updated_at} />}
-
           {sop && !sopLoading && (
             <button
               onClick={() => { setAddingStep(true); setEditingStepId(null); }}
@@ -268,6 +357,7 @@ export default function ExtractedSteps({ sop, sopLoading, onSopUpdated }) {
                     <div className="min-w-0">
                       <h4 className="font-headline font-bold text-on-surface uppercase tracking-tight">{step.title}</h4>
                       <p className="font-body text-xs text-on-surface-variant mt-1">{step.description}</p>
+                      <SafetyBadges items={step.safety} />
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0 ml-4">

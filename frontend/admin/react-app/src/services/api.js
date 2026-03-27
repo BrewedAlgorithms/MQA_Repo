@@ -48,11 +48,11 @@ export const sopApi = {
 
   get: (sop_id) => request('GET', `/api/sops/${sop_id}`),
 
-  addStep: (sop_id, title, description) =>
-    request('POST', `/api/sops/${sop_id}/steps`, { title, description }),
+  addStep: (sop_id, title, description, safety = []) =>
+    request('POST', `/api/sops/${sop_id}/steps`, { title, description, safety }),
 
-  updateStep: (sop_id, step_id, title, description) =>
-    request('PUT', `/api/sops/${sop_id}/steps/${step_id}`, { title, description }),
+  updateStep: (sop_id, step_id, title, description, safety) =>
+    request('PUT', `/api/sops/${sop_id}/steps/${step_id}`, { title, description, safety }),
 
   deleteStep: (sop_id, step_id) =>
     request('DELETE', `/api/sops/${sop_id}/steps/${step_id}`),
