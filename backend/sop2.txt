@@ -1,0 +1,13 @@
+Standard Operating Procedure: Workspace Setup and Action
+Procedure Number: SOP-002
+
+General Requirement:
+The first and most critical step is to "open laptop". The laptop must remain open to reference instructions while performing all subsequent actions in this SOP. Therefore, "open laptop" is a mandatory prerequisite for every other step listed below, except closing it at the end.
+
+Step 1: Open laptop.
+Step 2: Open Book.
+Step 3: Take and use blue spray Bottle.
+Step 4: Keep the bottle on the table.
+Step 5: Take green bottle.
+Step 6: Place bottle on table.
+Step 7: Close laptop.

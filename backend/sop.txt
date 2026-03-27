@@ -1,0 +1,88 @@
+# **STANDARD OPERATING PROCEDURE (SOP)**
+### **Task: Rear Door Preparation and Primary Seal Application**
+**Document Number:** SOP-RD-001
+**Revision:** 1.0
+**Department:** Assembly / Weatherstripping
+**Date:** March 26, 2026
+
+---
+
+## **1. Objective**
+To define the standardized, step-by-step process for preparing the rear door surface, installing temporary guides, and applying the primary weather seal to ensure zero defects, optimal adhesion, and standardized cycle times.
+
+## **2. Scope**
+This procedure applies to all assembly technicians stationed at the Rear Door Seal Application cell.
+
+## **3. Required Tools & Materials**
+* Dry, lint-free wiping cloths
+* Isopropyl (IP) Solution (Approved surface cleaner)
+* Temporary Alignment Grommet
+* Primary Door Seal
+* Seal Holding Clamp
+* Nylon/Rubber Roller Pressing Tool
+* Adjustable Door Trolley System
+
+## **4. Safety & Personal Protective Equipment (PPE)**
+* **Safety Glasses:** Must be worn at all times to protect eyes from dust and chemical splashes.
+* **Nitrile Gloves:** Required during Step 3 (handling IP solution) to protect skin.
+* **Ergonomics:** Ensure the trolley is adjusted to the correct height to prevent back strain during pressing operations.
+
+---
+
+## **5. Detailed Operational Procedure**
+
+### **Phase 1: Surface Preparation & Inspection**
+
+**Step 1: Visual Inspection**
+* **Action:** Carefully examine the entire painted surface of the rear door flange and perimeter.
+* **Detail:** Look for any scratches, dents, paint runs, or unpainted areas. 
+* **Quality Check:** If any critical paint damage or deformation is identified, *do not proceed*. Escalate the door to the Quality Assurance (QA) rework station immediately.
+
+**Step 2: Dry Surface Cleaning**
+* **Action:** Take a clean, dry lint-free wiping cloth.
+* **Detail:** Wipe down the entire seal application track on the rear door. Use a continuous, one-directional motion (e.g., top-to-bottom) to effectively sweep away dry dust, loose metal shavings, or lint. 
+
+**Step 3: Wet Surface Cleaning (Chemical Prep)**
+* **Action:** Apply a controlled amount of IP (Isopropyl) solution directly onto a fresh wiping cloth. **Never spray the IP solution directly onto the door surface.**
+* **Detail:** Vigorously wipe the perimeter where the seal will be applied. This removes invisible oils, grease, and microscopic contaminants crucial for tape adhesion. Allow 5–10 seconds for the IP solution to flash-dry completely.
+* **5S Housekeeping:** Immediately place the wet wiping cloth back into its designated, labeled slot in the tools cabinet to maintain a clear workstation and prevent cross-contamination.
+
+### **Phase 2: Alignment & Seal Placement**
+
+**Step 4: Grommet Installation (Alignment Guide)**
+* **Action:** Pick up the temporary alignment grommet from the parts bin.
+* **Detail:** Locate the pre-drilled locator hole (or designated jig point) on the door frame. Insert and fix the grommet firmly into this position. This grommet acts as your physical "zero point" to ensure the seal starts at the exact correct coordinate every time.
+
+**Step 5: Primary Seal Preparation**
+* **Action:** Collect the designated primary seal for the specific door variant from the material rack.
+* **Detail:** Perform a quick visual check on the seal. Wipe it with a clean cloth to ensure no manufacturing release agents or warehouse dust are present on the rubber or the edges of the backing tape.
+
+**Step 6: Seal Fixing & Initial Tack**
+* **Action:** Insert the starting end of the primary seal into the holding clamp to secure your starting angle.
+* **Detail:** Align the seal against the installed grommet. Begin peeling back the protective backing tape of the adhesive in small sections (roughly 10–15 cm at a time). 
+* **Execution:** As the tape is exposed, stick the seal onto the door frame. Use **both hands** to apply firm, even pressure along the center of the seal. Do not stretch the rubber as you apply it, as this will cause it to shrink and peel off later.
+
+### **Phase 3: Final Pressing & Quality Assurance**
+
+**Step 7: Grommet Removal**
+* **Action:** Once the seal is fully tacked into place around the perimeter, gently grip the temporary alignment grommet.
+* **Detail:** Pull it straight out to remove it. Ensure you do not snag or pull the newly applied seal during this motion. Return the grommet to the parts bin for the next cycle.
+
+**Step 8: Upper Side Pressing**
+* **Action:** Retrieve the designated pressing tool (roller).
+* **Detail:** Using your **right hand**, apply firm pressure to the tool. Perform "back-to-back" pressing—meaning you roll forward and immediately backward over the exact same segment—along the entire *upper section* of the door. This activates the pressure-sensitive adhesive and purges any trapped air bubbles.
+
+**Step 9: Ergonomic Door Position Adjustment**
+* **Action:** Grasp the rotational handle on the door trolley.
+* **Detail:** Rotate the handle to safely pivot and lift the door upward. Lock the trolley into the elevated position. This brings the lower half of the door into your ergonomic strike zone, preventing you from having to bend or kneel on the floor.
+
+**Step 10: Bottom Side Pressing**
+* **Action:** With the door securely elevated, resume using the pressing tool.
+* **Detail:** Perform the identical "back-to-back" pressing motion along the *bottom side* of the door. Ensure uniform pressure is applied around the bottom corners, as these are high-stress areas for water leaks. 
+
+---
+
+## **6. End of Cycle**
+* Return the pressing tool to its holster.
+* Release the door trolley lock and safely transfer the completed door to the next assembly station.
+* Perform a quick visual check of your workstation before the next unit arrives.

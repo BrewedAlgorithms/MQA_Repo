@@ -1,18 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 function CameraFeed({ cam }) {
   const [isPlaying, setIsPlaying] = useState(true);
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (isPlaying) {
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
+    }
+  }, [isPlaying]);
 
   return (
     <div className="bg-surface-container-low p-[1px]">
       <div className="relative aspect-video overflow-hidden bg-black group flex items-center justify-center">
         {isPlaying ? (
           <>
-            <img 
-              className="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-700" 
-              src={cam.image} 
-              alt={cam.station} 
-            />
+            {cam.video ? (
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover opacity-70 grayscale hover:grayscale-0 transition-all duration-700"
+                src={cam.video}
+                autoPlay
+                loop
+                muted
+                playsInline
+              />
+            ) : (
+              <img
+                className="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-700"
+                src={cam.image}
+                alt={cam.station}
+              />
+            )}
             <div className="absolute inset-0 scanline pointer-events-none opacity-20"></div>
             <div className="absolute top-4 left-4 flex items-center space-x-2 bg-black/60 px-2 py-1">
               <span className={`w-2 h-2 ${cam.color} animate-pulse`}></span>
@@ -74,17 +96,17 @@ export default function CameraGrid() {
     {
       id: 'CAM_VX_01', station: 'STATION A', color: 'bg-primary', camTextColor: 'text-primary/80',
       step: 'Step 05: Grommet Installation', tech: 'ID_921', progressText: 'In Progress', progressColor: 'text-primary-container',
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuA6vCaeZkt8egMYuotXeg9qEmQWL1ayYzSSnz13IuNne8OYOVfBESP7x9jKPoT_ChT_fEnhUeEbjOf6YKZdMUy_F6hS_o7UFlkMF_9gFx0yB2UoSI-dSU0onURfp3_vGG4qBn6ZfeQ63BBJ9tETL5fAy1uJizIde5xgCS1LpVs81Mh-AMEHc-D6rDeJvpTxuJZocY7BfukPGX9ng1mhxYgTK5ABT51xWXvnHFromxofiLKFqQ7hUgXiQ4JTEUrVxJoIpUfLHni4ezM"
+      video: '/1.mp4',
     },
     {
       id: 'CAM_VX_02', station: 'STATION B', color: 'bg-secondary', camTextColor: 'text-secondary/80',
       step: 'Step 12: Thermal Shielding', tech: 'ID_104', progressText: 'Awaiting QC', progressColor: 'text-secondary-dim italic',
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuA6YLL6OLwuk9Kj2valiWtB9xqoqNTlxDe3qpHIFnqbZL-_gP0tM1s9hzqGz1elPs8zd5j_BsR_cI2GbDZUwmAkMfQp27LcTJEnTl54P03_1USNCBfx-ALaOLZiW2XFg6mqbzKEs04N1npFofynmxIQG9hvBG1uw9e_b8N_skYUqZVX_7nKMUEI7oVU3oPrhDAiCGKjI8_fWRbxCLy4R7iT06yrpWYKx9ZUei1d0Y0bdEag1RHhoFH4rMi-z-lnfw2NCl2OWZtOtLo"
+      video: '/2.mp4',
     },
     {
       id: 'CAM_VX_03', station: 'STATION C', color: 'bg-primary', camTextColor: 'text-primary/80',
       step: 'Step 01: Core Milling', tech: 'AUTO_RM8', progressText: 'Nominal', progressColor: 'text-primary-container',
-      image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB43ArpQdomn0_Q5ZgaoTtaah6uPcWgOGzUsAYTkHWhr8JQYCPES_4dEnEOx84LQoRyd7-Dji5C7e06141_luU8kyFRlC9t64VrObPZklE_zMDsixTF_LPNhfmxNrKemQ7n1WiLhBHZc7xnHJbT-jgNR__InJ6HMiXDguGFJkhBFwA5sk_Q_S4pwQbZVPm2saglksu_M7Fh__2Ip6XrZDC6Zv6ZRQkxrQ6TYRAQ2WTJprLjfjzc7LyfpqcBVUDtEgZ8i_vGQrG3RcM"
+      video: '/3.mp4',
     },
     {
       id: 'CAM_VX_04', station: 'STATION D', color: 'bg-tertiary', camTextColor: 'text-tertiary/80',

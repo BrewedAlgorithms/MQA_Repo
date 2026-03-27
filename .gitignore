@@ -19,6 +19,18 @@ Server/.env
 # Large local media assets
 Server/Media/
 
+# Video files
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.flv
+*.wmv
+*.m4v
+*.mpeg
+*.mpg
+
 # Tooling caches
 .pytest_cache/
 .mypy_cache/
