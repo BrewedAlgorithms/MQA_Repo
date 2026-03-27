@@ -5,17 +5,16 @@ import { useWorkflow } from '../context/WorkflowContext';
 const DEFAULT_STREAM_URL =
   import.meta.env.VITE_STREAM_URL || 'http://localhost:8888/live/index.m3u8';
 
+const DEFAULT_TIMESTAMP_URL =
+  import.meta.env.VITE_TIMESTAMP_URL || 'http://localhost:5051/position';
+
 // HLS adds latency between what the streamer writes and what the viewer sees.
 // This offset delays step transitions to match the viewer's actual playback.
 const HLS_LAG_SECONDS = 3;
 
-// Timestamp API served by streamer.py alongside the RTSP push
-const TIMESTAMP_URL =
-  import.meta.env.VITE_TIMESTAMP_URL ||
-  'http://localhost:5051/position';
-
-export default function LiveFeedPopup({ streamUrl, stationName }) {
+export default function LiveFeedPopup({ streamUrl, stationName, timestampUrl }) {
   const STREAM_URL = streamUrl || DEFAULT_STREAM_URL;
+  const TIMESTAMP_URL = timestampUrl || DEFAULT_TIMESTAMP_URL;
   const { currentStepId, setCurrentStepId, workflowSteps, setIsWorkflowCompleted } = useWorkflow();
   const [liveTime, setLiveTime] = useState('0:00');
   const [streamError, setStreamError] = useState(false);
@@ -106,7 +105,7 @@ export default function LiveFeedPopup({ streamUrl, stationName }) {
     tick(); // immediate first run
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [workflowSteps, currentStepId, setCurrentStepId, setIsWorkflowCompleted]);
+  }, [TIMESTAMP_URL, workflowSteps, currentStepId, setCurrentStepId, setIsWorkflowCompleted]);
 
   return (
     <div className="fixed top-8 left-8 z-50 w-72 h-48 bg-surface-container-high rounded-xl border border-white/10 overflow-hidden shadow-2xl group">

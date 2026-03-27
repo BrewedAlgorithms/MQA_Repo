@@ -15,6 +15,8 @@ def _station_out(doc: dict) -> StationOut:
         source_type=doc.get("source_type"),
         rtsp_url=doc.get("rtsp_url"),
         hls_url=doc.get("hls_url"),
+        timestamp_url=doc.get("timestamp_url"),
+        hc=doc.get("hc", False),
         created_at=doc["created_at"],
     )
 
@@ -88,7 +90,7 @@ async def update_station(station_id: str, body: StationUpdate):
             raise HTTPException(status_code=409, detail="Station name already exists")
         update_fields["name"] = body.name
 
-    for field in ("source_type", "rtsp_url", "hls_url"):
+    for field in ("source_type", "rtsp_url", "hls_url", "timestamp_url", "hc"):
         if field in body.model_fields_set:
             update_fields[field] = getattr(body, field)
 

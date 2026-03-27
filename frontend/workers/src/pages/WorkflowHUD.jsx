@@ -10,7 +10,7 @@ const API_URL =
   import.meta.env.VITE_API_URL ||
   'http://localhost:8001';
 
-const TIMESTAMP_URL =
+const DEFAULT_TIMESTAMP_URL =
   import.meta.env.VITE_TIMESTAMP_URL ||
   'http://localhost:5051/position';
 
@@ -60,11 +60,12 @@ export default function WorkflowHUD() {
     let helmetTimer, glovesTimer, completionTimer;
 
     const initSafety = async () => {
+      const timestampUrl = station.timestamp_url || DEFAULT_TIMESTAMP_URL;
       let streamSeconds = 0;
       let online = false;
 
       try {
-        const res = await fetch(TIMESTAMP_URL);
+        const res = await fetch(timestampUrl);
         if (res.ok) {
           const { seconds } = await res.json();
           streamSeconds = seconds ?? 0;
@@ -170,9 +171,9 @@ export default function WorkflowHUD() {
               </p>
             </div>
 
-            <div className="w-full p-4 rounded-xl border border-white/5 bg-white/[0.02] flex items-center gap-3">
+              <div className="w-full p-4 rounded-xl border border-white/5 bg-white/[0.02] flex items-center gap-3">
               <div className="w-2 h-2 bg-error rounded-full flex-shrink-0" />
-              <span className="font-mono text-xs text-white/30 truncate">{TIMESTAMP_URL}</span>
+              <span className="font-mono text-xs text-white/30 truncate">{station?.timestamp_url || DEFAULT_TIMESTAMP_URL}</span>
             </div>
 
             <button
@@ -190,7 +191,11 @@ export default function WorkflowHUD() {
   return (
     <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
       <TopTitle />
-      <LiveFeedPopup streamUrl={station.hls_url} stationName={station.name} />
+      <LiveFeedPopup
+        streamUrl={station.hls_url}
+        stationName={station.name}
+        timestampUrl={station.timestamp_url}
+      />
 
       {!isSafetyComplete ? (
         <main className="flex-grow flex flex-col items-center justify-center px-6 md:px-20 py-10 z-10 w-full mt-40 font-body">

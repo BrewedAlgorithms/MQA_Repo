@@ -43,6 +43,8 @@ class StationOut(BaseModel):
     source_type: Optional[str] = Field(default=None, description="Stream source type: 'rtsp' or 'hls'. Null means no source configured.")
     rtsp_url: Optional[str] = Field(default=None, description="RTSP stream URL (used when source_type is 'rtsp').")
     hls_url: Optional[str] = Field(default=None, description="HLS stream URL (used when source_type is 'hls').")
+    timestamp_url: Optional[str] = Field(default=None, description="URL of the streamer.py /position endpoint for this station (e.g. http://localhost:5052/position).")
+    hc: bool = Field(default=False, description="Hard-coded video file stream flag. True = this station streams a video file (not a live webcam).")
     created_at: datetime = Field(..., description="UTC timestamp of creation.")
 
 
@@ -64,6 +66,14 @@ class StationUpdate(BaseModel):
     hls_url: Optional[str] = Field(
         default=None,
         description="HLS stream URL. Used when source_type is 'hls'.",
+    )
+    timestamp_url: Optional[str] = Field(
+        default=None,
+        description="URL of the streamer.py /position endpoint (e.g. http://localhost:5052/position). Omit to leave unchanged.",
+    )
+    hc: Optional[bool] = Field(
+        default=None,
+        description="Hard-coded video file stream flag. Omit to leave unchanged.",
     )
 
 

@@ -213,10 +213,9 @@ def stream_file(video_path: str, rtsp_url: str, stream_name: str,
     print("[INFO] Press Ctrl+C to stop.\n")
 
     stop = threading.Event()
-    if duration > 0:
-        threading.Thread(
-            target=_track_file_position, args=(duration, stop), daemon=True
-        ).start()
+    threading.Thread(
+        target=_track_file_position, args=(duration, stop), daemon=True
+    ).start()
 
     while True:
         proc = subprocess.Popen(cmd)
@@ -233,15 +232,14 @@ def stream_file(video_path: str, rtsp_url: str, stream_name: str,
         if proc.returncode == 0:
             return
 
-        stop.clear()
+        # Do NOT clear the old stop — let the old thread exit cleanly.
         print("[WARN] FFmpeg exited unexpectedly — reconnecting in 2s…")
         time.sleep(2)
         print("[INFO] Restarting FFmpeg…")
         stop = threading.Event()
-        if duration > 0:
-            threading.Thread(
-                target=_track_file_position, args=(duration, stop), daemon=True
-            ).start()
+        threading.Thread(
+            target=_track_file_position, args=(duration, stop), daemon=True
+        ).start()
 
 
 # ── Webcam helper ──────────────────────────────────────────────────────────────

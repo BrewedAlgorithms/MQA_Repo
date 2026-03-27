@@ -23,6 +23,8 @@ export default function ManageStations() {
   const [editSourceType, setEditSourceType] = useState('none');
   const [editRtspUrl, setEditRtspUrl] = useState('');
   const [editHlsUrl, setEditHlsUrl] = useState('');
+  const [editTimestampUrl, setEditTimestampUrl] = useState('');
+  const [editHc, setEditHc] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState(null);
 
@@ -67,6 +69,8 @@ export default function ManageStations() {
     setEditSourceType(station.source_type || 'none');
     setEditRtspUrl(station.rtsp_url || '');
     setEditHlsUrl(station.hls_url || '');
+    setEditTimestampUrl(station.timestamp_url || '');
+    setEditHc(station.hc ?? false);
     setEditError(null);
     setDeletingId(null);
   }
@@ -93,6 +97,8 @@ export default function ManageStations() {
         hls_url: (editSourceType === 'hls' || editSourceType === 'rtsp')
           ? (editHlsUrl.trim() || null)
           : null,
+        timestamp_url: editTimestampUrl.trim() || null,
+        hc: editHc,
       };
       const updated = await stationsApi.update(station.id, payload);
       setStations(prev =>
@@ -212,6 +218,11 @@ export default function ManageStations() {
                             : 'bg-primary/10 text-primary border-primary/30'
                         }`}>
                           {station.source_type}
+                        </span>
+                      )}
+                      {station.hc && (
+                        <span className="font-label text-[10px] uppercase tracking-widest px-2 py-0.5 border shrink-0 bg-secondary/10 text-secondary border-secondary/30">
+                          HC
                         </span>
                       )}
                     </div>
@@ -348,6 +359,46 @@ export default function ManageStations() {
                             />
                           </div>
                         )}
+
+                        {/* Timestamp URL */}
+                        {editSourceType !== 'none' && (
+                          <div>
+                            <label className="font-label text-[10px] text-on-surface-variant uppercase tracking-widest block mb-1.5">
+                              Timestamp URL <span className="text-primary normal-case">(streamer.py /position endpoint)</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={editTimestampUrl}
+                              onChange={e => setEditTimestampUrl(e.target.value)}
+                              placeholder="http://localhost:5051/position"
+                              className="w-full bg-surface-container-highest text-on-surface font-mono px-4 py-2.5 border border-outline-variant outline-none focus:border-primary text-xs"
+                            />
+                            <p className="mt-1.5 text-[10px] text-on-surface-variant font-label">
+                              Check streamer.py output for the actual port — it increments if 5051 is already in use.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* HC flag */}
+                        <div className="flex items-center justify-between py-2 border-t border-outline-variant/30">
+                          <div>
+                            <span className="font-label text-[10px] text-on-surface-variant uppercase tracking-widest">HC — Hard-coded video stream</span>
+                            <p className="text-[10px] text-outline-variant font-label mt-0.5">
+                              Enable if this station streams a video file (not a live webcam).
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setEditHc(v => !v)}
+                            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 transition-colors duration-200 focus:outline-none ${
+                              editHc ? 'bg-primary border-primary' : 'bg-surface-container-highest border-outline-variant'
+                            }`}
+                          >
+                            <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${
+                              editHc ? 'translate-x-5' : 'translate-x-0.5'
+                            }`} />
+                          </button>
+                        </div>
 
                         {editError && (
                           <p className="text-xs text-error font-label uppercase">{editError}</p>
