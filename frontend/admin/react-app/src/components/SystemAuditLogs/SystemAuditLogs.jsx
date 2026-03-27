@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import PageHeader from './PageHeader';
 import Filters from './Filters';
 import DataTable from './DataTable';
-import { auditLogsData } from '../../data/auditLogs';
+import { auditLogsData, generateRandomLog } from '../../data/auditLogs';
 import { stationsApi } from '../../services/api';
 
 export default function SystemAuditLogs({ initialSeverity }) {
-  const [station, setStation] = useState('');
+  const [station,  setStation]  = useState('');
   const [severity, setSeverity] = useState(initialSeverity || null);
   const [stations, setStations] = useState([]);
+  const [logs,     setLogs]     = useState(auditLogsData);
 
   useEffect(() => {
     stationsApi.list().then(setStations).catch(() => {});
@@ -19,7 +20,21 @@ export default function SystemAuditLogs({ initialSeverity }) {
     if (initialSeverity) setSeverity(initialSeverity);
   }, [initialSeverity]);
 
-  const filtered = auditLogsData.filter(log => {
+  // Randomly prepend a new log every 1–5 seconds
+  useEffect(() => {
+    let timer;
+    const schedule = () => {
+      const delay = (1 + Math.random() * 4) * 1000;
+      timer = setTimeout(() => {
+        setLogs(prev => [generateRandomLog(), ...prev].slice(0, 100));
+        schedule();
+      }, delay);
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, []);
+
+  const filtered = logs.filter(log => {
     const matchStation  = !station  || log.station.toLowerCase().includes(station.toLowerCase());
     const matchSeverity = !severity || log.severity === severity;
     return matchStation && matchSeverity;
