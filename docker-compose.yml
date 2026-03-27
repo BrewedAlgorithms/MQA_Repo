@@ -1,4 +1,15 @@
 services:
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mqa_mediamtx
+    restart: unless-stopped
+    environment:
+      - MTX_PROTOCOLS=tcp
+    ports:
+      - "8554:8554"   # RTSP
+      - "8888:8888"   # HLS
+      - "8889:8889"   # WebRTC
+
   workers:
     image: node:22-alpine
     container_name: mqa_workers
