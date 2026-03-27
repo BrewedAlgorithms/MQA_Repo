@@ -31,7 +31,7 @@ RTSP_PORT      = int(os.environ.get("RTSP_PORT", 8554))
 TIMESTAMP_PORT = int(os.environ.get("TIMESTAMP_PORT", 5051))
 
 _SCRIPT_DIR        = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_VIDEO_PATH = os.path.join(_SCRIPT_DIR, "..", "assets", "1.mp4")
+DEFAULT_VIDEO_PATH = os.path.join(_SCRIPT_DIR, "..", "..", "assets", "1.mp4")
 
 # Shared state – written by the stream loop, read by the HTTP server
 _position_lock    = threading.Lock()

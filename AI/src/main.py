@@ -150,6 +150,9 @@ class PipelineWorker:
         self._latest_state  = {}
         self._last_gpt_fusion = ""
 
+        # Signals the GPT thread to reset the SOP tracker at the next safe point
+        self._reset_event = threading.Event()
+
     def start(self):
         self._video_thread = threading.Thread(
             target=self._video_loop, daemon=True)
@@ -160,6 +163,10 @@ class PipelineWorker:
 
     def stop(self):
         self._stop.set()
+
+    def request_reset(self):
+        """Thread-safe: ask the GPT thread to reset the SOP tracker at its next iteration."""
+        self._reset_event.set()
 
     # ── VIDEO LOOP ────────────────────────────────────────────────────────────
 
@@ -263,6 +270,13 @@ class PipelineWorker:
         while not self._stop.is_set():
             time.sleep(GPT_INTERVAL)
 
+            # Handle reset requests from the GUI (process-complete auto-reset)
+            if self._reset_event.is_set():
+                self.tracker.reset()
+                self._reset_event.clear()
+                self._last_gpt_fusion = ""
+                self.result_queue.put({"type": "sop_reset"})
+
             with self._state_lock:
                 snap = dict(self._latest_state)
 
@@ -349,6 +363,7 @@ class App(tk.Tk):
 
         self.result_queue = queue.Queue()
         self._photo = None
+        self._reset_scheduled = False   # True while the 30-second completion countdown is running
 
         self._build_ui()
         self._start_pipeline()
@@ -598,9 +613,23 @@ class App(tk.Tk):
                 elif item["type"] == "gpt":
                     self._update_alert(item["state"], item["parsed"])
                     self.status_lbl.config(text="● ANALYSED", fg=ACCENT)
+                    # Trigger auto-reset countdown when the last SOP step completes
+                    if item["state"].all_done and not self._reset_scheduled:
+                        self._reset_scheduled = True
+                        self._start_completion_countdown(30)
 
                 elif item["type"] == "checklist":
                     self._update_checklist(item["items"])
+
+                elif item["type"] == "sop_reset":
+                    self._reset_scheduled = False
+                    self._update_checklist(self.worker.tracker.get_checklist())
+                    self.alert_lbl.config(
+                        text="Process reset. Monitoring new process…", fg=COL_OK)
+                    self.alert_frame.config(bg=PANEL_BG)
+                    self.alert_lbl.config(bg=PANEL_BG)
+                    self.status_lbl.config(text="● LIVE", fg=COL_OK)
+                    broadcaster.push("process_reset", "SOP tracker reset. New process started.")
 
                 elif item["type"] == "error":
                     self.alert_lbl.config(
@@ -614,6 +643,30 @@ class App(tk.Tk):
             pass
 
         self.after(16, self._poll)   # ~60 fps UI refresh
+
+    def _start_completion_countdown(self, seconds: int):
+        """
+        Called once when all SOP steps are confirmed complete.
+        Shows a live countdown and fires the tracker reset after `seconds`.
+        Also broadcasts process_complete over SSE so the frontend is notified.
+        """
+        broadcaster.push("process_complete", f"All SOP steps done. Resetting in {seconds}s.")
+        self._countdown_tick(seconds)
+
+    def _countdown_tick(self, remaining: int):
+        """Decrement the on-screen counter every second; reset when it reaches 0."""
+        if not self._reset_scheduled:
+            return   # countdown was cancelled (e.g. manual reset)
+        if remaining > 0:
+            self.alert_lbl.config(
+                text=f"✔ Process Complete!\nResetting in {remaining}s…",
+                fg=COL_OK,
+            )
+            self.alert_frame.config(bg=PANEL_BG)
+            self.alert_lbl.config(bg=PANEL_BG)
+            self.after(1000, lambda: self._countdown_tick(remaining - 1))
+        else:
+            self.worker.request_reset()
 
     def on_close(self):
         self.worker.stop()

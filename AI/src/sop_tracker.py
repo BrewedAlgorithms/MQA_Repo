@@ -42,6 +42,7 @@ class SOPState:
     all_done: bool = False
     blocked: bool = False                 # True when waiting for a missed step to be redone
     blocked_on_step: Optional[int] = None # 0-based index of the step we're waiting for
+    completion_time: Optional[float] = None  # epoch time when all_done was first set
 
 
 # ── TRACKER ───────────────────────────────────────────────────────────────────
@@ -137,6 +138,8 @@ class SOPTracker:
         # Check if all steps are done
         if len(self.state.completed_steps) == self.n:
             self.state.all_done = True
+            if self.state.completion_time is None:
+                self.state.completion_time = time.time()
             self.state.alert = "✔ All SOP steps completed!"
             self.state.alert_type = "OK"
 

@@ -19,11 +19,12 @@ export function WorkflowProvider({ children }) {
   const [aiMode, setAiMode] = useState(false);
   const enableAiMode = useCallback(() => setAiMode(true), []);
 
-  // Keep a ref so SSE listeners always see the current total steps
+  // Keep refs so SSE listeners always see the latest values without stale closures
   const totalStepsRef = useRef(0);
-  useEffect(() => {
-    totalStepsRef.current = config.steps.length;
-  }, [config.steps.length]);
+  useEffect(() => { totalStepsRef.current = config.steps.length; }, [config.steps.length]);
+
+  const currentStepIdRef = useRef(1);
+  useEffect(() => { currentStepIdRef.current = currentStepId; }, [currentStepId]);
 
   // Local safety toast — triggered programmatically by HC schedule or AI SSE
   const [localToast, setLocalToast] = useState({ message: null, ts: null });
@@ -45,16 +46,19 @@ export function WorkflowProvider({ children }) {
 
     es.addEventListener('current_step', (e) => {
       const step = parseInt(e.data, 10);
-      if (!isNaN(step)) {
-        const total = totalStepsRef.current;
-        if (total > 0 && step > total) {
-          setIsWorkflowCompleted(true);
-          setCurrentStepId(total);
-        } else {
-          setIsWorkflowCompleted(false);
-          setCurrentStepId(Math.max(1, step));
-        }
+      if (isNaN(step)) return;
+
+      const total = totalStepsRef.current;
+      const next  = total > 0 && step > total ? total : Math.max(1, step);
+
+      if (next === currentStepIdRef.current) return;
+
+      if (total > 0 && step > total) {
+        setIsWorkflowCompleted(true);
+      } else {
+        setIsWorkflowCompleted(false);
       }
+      setCurrentStepId(next);
     });
 
     es.addEventListener('safety_err', (e) => {
@@ -85,7 +89,7 @@ export function WorkflowProvider({ children }) {
     poll();
     const id = setInterval(poll, 1000);
     return () => clearInterval(id);
-  }, [config]);
+  }, [config, aiMode]);
 
   const currentStepData = config.steps.find(s => s.id === currentStepId) ?? null;
 

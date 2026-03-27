@@ -42,11 +42,44 @@ export default function WorkflowHUD() {
   const [isStreamOnline, setIsStreamOnline] = useState(null); // null=checking | true | false
   const [sopSteps, setSopSteps] = useState(null);  // null=loading | array=done (non-HC only)
 
+  // 'idle' | 'connecting' | 'ok' | 'error'
+  const [aiStatus, setAiStatus] = useState('idle');
+  const [aiErrorMsg, setAiErrorMsg] = useState('');
+  const aiStepsRef = useRef(null); // retain steps for retry
+
   const configuredRef = useRef(false);
 
   const retryStreamCheck = () => {
     configuredRef.current = false;
     setIsStreamOnline(null);
+  };
+
+  const postSopToAi = async (steps) => {
+    setAiStatus('connecting');
+    setAiErrorMsg('');
+    try {
+      const payload = steps.map((s) => ({
+        title: s.title,
+        instructions: s.instructions ?? [],
+        safety: s.safety ?? [],
+      }));
+      const res = await fetch(`${AI_URL}/sop`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        enableAiMode();
+        setAiStatus('ok');
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setAiStatus('error');
+        setAiErrorMsg(body.detail || `AI returned ${res.status}`);
+      }
+    } catch {
+      setAiStatus('error');
+      setAiErrorMsg(`AI service unreachable at ${AI_URL}`);
+    }
   };
 
   // ── Resolve station from URL param ───────────────────────────────────────────
@@ -94,21 +127,8 @@ export default function WorkflowHUD() {
 
           // Send SOP to AI and open SSE when this is the AI-monitored station
           if (station.name === AI_STATION && steps.length > 0) {
-            try {
-              const aiPayload = steps.map((s) => ({
-                title: s.title,
-                instructions: s.instructions ?? [],
-                safety: s.safety ?? [],
-              }));
-              const aiRes = await fetch(`${AI_URL}/sop`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(aiPayload),
-              });
-              if (aiRes.ok) enableAiMode();
-            } catch {
-              // AI unreachable — fall back to dev-polling
-            }
+            aiStepsRef.current = steps;
+            await postSopToAi(steps);
           }
         } catch {
           setSopSteps([]);
@@ -266,6 +286,62 @@ export default function WorkflowHUD() {
               <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-white/20 mb-2">Manual Step Control</p>
               <p className="font-mono text-xs text-white/40 break-all">{API_URL}/dev/{encodeURIComponent(station.name)}/step/<span className="text-primary">N</span></p>
             </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // ── AI station: connecting ───────────────────────────────────────────────────
+  if (station.name === AI_STATION && aiStatus === 'connecting') {
+    return (
+      <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
+        <TopTitle />
+        <main className="flex-grow flex flex-col items-center justify-center px-6">
+          <div className="max-w-lg w-full flex flex-col items-center text-center gap-6">
+            <div className="w-20 h-20 rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center">
+              <span className="material-symbols-outlined text-4xl text-primary animate-spin" style={{ animationDuration: '1.5s' }}>sync</span>
+            </div>
+            <div>
+              <h1 className="font-headline text-3xl font-bold text-white uppercase tracking-tight mb-3">Connecting to AI</h1>
+              <p className="text-white/30 text-sm tracking-wide">Sending SOP to AI pipeline…</p>
+            </div>
+            <div className="w-full p-4 rounded-xl border border-white/5 bg-white/[0.02] flex items-center gap-3">
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" />
+              <span className="font-mono text-xs text-white/30 truncate">{AI_URL}/sop</span>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // ── AI station: unreachable ──────────────────────────────────────────────────
+  if (station.name === AI_STATION && aiStatus === 'error') {
+    return (
+      <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
+        <TopTitle />
+        <main className="flex-grow flex flex-col items-center justify-center px-6">
+          <div className="max-w-lg w-full flex flex-col items-center text-center gap-6">
+            <div className="w-20 h-20 rounded-full border border-red-500/30 bg-red-500/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-4xl text-red-400" style={{ fontVariationSettings: "'FILL' 1" }}>smart_toy</span>
+            </div>
+            <div>
+              <h1 className="font-headline text-3xl font-bold text-white uppercase tracking-tight mb-3">AI Unavailable</h1>
+              <p className="text-white/30 text-sm tracking-wide">
+                This station requires the AI pipeline to be running before work can begin.
+              </p>
+            </div>
+            <div className="w-full p-4 rounded-xl border border-red-500/20 bg-red-500/5 flex items-start gap-3 text-left">
+              <span className="material-symbols-outlined text-red-400 text-base flex-shrink-0 mt-0.5">error</span>
+              <span className="font-mono text-xs text-red-300/80 break-all">{aiErrorMsg}</span>
+            </div>
+            <button
+              onClick={() => postSopToAi(aiStepsRef.current)}
+              className="px-8 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 font-headline font-bold text-sm uppercase tracking-[0.2em] text-white/60 hover:text-white transition-all duration-200"
+            >
+              Retry
+            </button>
           </div>
         </main>
       </div>

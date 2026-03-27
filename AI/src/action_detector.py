@@ -159,7 +159,7 @@ class YoloPoseActionDetector:
         if self._last_keypoints is None:
             cv2.putText(
                 frame,
-                "NO PERSON DETECTED",
+                "",
                 (50, 50),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1,
