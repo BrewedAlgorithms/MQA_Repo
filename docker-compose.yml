@@ -26,7 +26,7 @@ services:
     container_name: mqa_admin
     working_dir: /app
     volumes:
-      - ./frontend/admin:/app
+      - ./frontend/admin/react-app:/app
       - /app/node_modules
     ports:
       - "5174:5173"
