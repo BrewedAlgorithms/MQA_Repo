@@ -6,27 +6,49 @@ import MainCarousel from '../components/MainCarousel';
 import AgentListening from '../components/AgentListening';
 import { useNavigate } from 'react-router-dom';
 
+const TIMESTAMP_URL =
+  import.meta.env.VITE_TIMESTAMP_URL ||
+  'http://localhost:5051/position';
+
+const SAFETY_WINDOW_SECONDS = 60;
+
 export default function WorkflowHUD() {
   const navigate = useNavigate();
   const [helmetStatus, setHelmetStatus] = useState('checking');
   const [glovesStatus, setGlovesStatus] = useState('checking');
-  const [isSafetyComplete, setIsSafetyComplete] = useState(false);
+  // null = not yet determined (waiting for stream position check)
+  const [isSafetyComplete, setIsSafetyComplete] = useState(null);
 
   useEffect(() => {
-    // 2 seconds for Helmet check
-    const helmetTimer = setTimeout(() => {
-      setHelmetStatus('verified');
-    }, 2000);
+    let helmetTimer, glovesTimer, completionTimer;
 
-    // 6 seconds for Gloves check
-    const glovesTimer = setTimeout(() => {
-      setGlovesStatus('verified');
-    }, 8000);
+    const initSafety = async () => {
+      let streamSeconds = 0;
+      try {
+        const res = await fetch(TIMESTAMP_URL);
+        if (res.ok) {
+          const { seconds } = await res.json();
+          streamSeconds = seconds ?? 0;
+        }
+      } catch {
+        // streamer not running — default to 0, show safety screen
+      }
 
-    // Total sequence: max checking time (8s) + 3s of "all clear" state
-    const completionTimer = setTimeout(() => {
-      setIsSafetyComplete(true);
-    }, 11000);
+      // Skip safety screen if stream is already past the first minute
+      if (streamSeconds >= SAFETY_WINDOW_SECONDS) {
+        setIsSafetyComplete(true);
+        return;
+      }
+
+      // Stream is within the first minute — run the safety check sequence
+      setIsSafetyComplete(false);
+
+      helmetTimer = setTimeout(() => setHelmetStatus('verified'), 2000);
+      glovesTimer = setTimeout(() => setGlovesStatus('verified'), 8000);
+      completionTimer = setTimeout(() => setIsSafetyComplete(true), 11000);
+    };
+
+    initSafety();
 
     return () => {
       clearTimeout(helmetTimer);
@@ -34,6 +56,16 @@ export default function WorkflowHUD() {
       clearTimeout(completionTimer);
     };
   }, []);
+
+  // Waiting for stream position check — render shell without main content
+  if (isSafetyComplete === null) {
+    return (
+      <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
+        <TopTitle />
+        <LiveFeedPopup />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
