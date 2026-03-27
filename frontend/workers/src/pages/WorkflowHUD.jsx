@@ -4,45 +4,89 @@ import LiveFeedPopup from '../components/LiveFeedPopup';
 import ProcessList from '../components/ProcessList';
 import MainCarousel from '../components/MainCarousel';
 import AgentListening from '../components/AgentListening';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:8001';
 
 const TIMESTAMP_URL =
   import.meta.env.VITE_TIMESTAMP_URL ||
   'http://localhost:5051/position';
 
-const SAFETY_WINDOW_SECONDS = 60;
+const SAFETY_WINDOW_SECONDS = 30;
 
 export default function WorkflowHUD() {
   const navigate = useNavigate();
+  const { stationName } = useParams();
+
+  const [station, setStation] = useState(null);        // null = loading | false = not found | object = found
   const [helmetStatus, setHelmetStatus] = useState('checking');
   const [glovesStatus, setGlovesStatus] = useState('checking');
-  // null = not yet determined (waiting for stream position check)
+  // null = not yet determined | true = online | false = offline
+  const [isStreamOnline, setIsStreamOnline] = useState(null);
   const [isSafetyComplete, setIsSafetyComplete] = useState(null);
 
+  const runCheck = () => {
+    setIsStreamOnline(null);
+    setIsSafetyComplete(null);
+    setHelmetStatus('checking');
+    setGlovesStatus('checking');
+  };
+
+  // ── Resolve station from URL param ───────────────────────────────────────────
   useEffect(() => {
+    const resolveStation = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/stations`);
+        if (!res.ok) throw new Error();
+        const all = await res.json();
+        const decoded = decodeURIComponent(stationName ?? '');
+        const match = all.find(
+          s => s.name.toLowerCase() === decoded.toLowerCase()
+        );
+        setStation(match ?? false);
+      } catch {
+        setStation(false);
+      }
+    };
+    resolveStation();
+  }, [stationName]);
+
+  // ── Stream + safety check (runs after station is resolved) ───────────────────
+  useEffect(() => {
+    if (!station || isStreamOnline !== null) return;
+
     let helmetTimer, glovesTimer, completionTimer;
 
     const initSafety = async () => {
       let streamSeconds = 0;
+      let online = false;
+
       try {
         const res = await fetch(TIMESTAMP_URL);
         if (res.ok) {
           const { seconds } = await res.json();
           streamSeconds = seconds ?? 0;
+          online = true;
         }
       } catch {
-        // streamer not running — default to 0, show safety screen
+        // streamer.py not reachable
       }
 
-      // Skip safety screen if stream is already past the first minute
+      if (!online) {
+        setIsStreamOnline(false);
+        return;
+      }
+
+      setIsStreamOnline(true);
+
       if (streamSeconds >= SAFETY_WINDOW_SECONDS) {
         setIsSafetyComplete(true);
         return;
       }
 
-      // Stream is within the first minute — run the safety check sequence
       setIsSafetyComplete(false);
-
       helmetTimer = setTimeout(() => setHelmetStatus('verified'), 2000);
       glovesTimer = setTimeout(() => setGlovesStatus('verified'), 8000);
       completionTimer = setTimeout(() => setIsSafetyComplete(true), 11000);
@@ -55,14 +99,90 @@ export default function WorkflowHUD() {
       clearTimeout(glovesTimer);
       clearTimeout(completionTimer);
     };
-  }, []);
+  }, [station, isStreamOnline]);
 
-  // Waiting for stream position check — render shell without main content
-  if (isSafetyComplete === null) {
+  // ── Resolving station ────────────────────────────────────────────────────────
+  if (station === null) {
     return (
       <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
         <TopTitle />
-        <LiveFeedPopup />
+      </div>
+    );
+  }
+
+  // ── Station not found ────────────────────────────────────────────────────────
+  if (station === false) {
+    return (
+      <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
+        <TopTitle />
+        <main className="flex-grow flex flex-col items-center justify-center px-6">
+          <div className="max-w-lg w-full flex flex-col items-center text-center gap-8">
+            <div className="w-20 h-20 rounded-full border border-white/10 bg-white/[0.03] flex items-center justify-center">
+              <span className="material-symbols-outlined text-4xl text-white/30" data-icon="location_off">location_off</span>
+            </div>
+            <div>
+              <h1 className="font-headline text-4xl font-bold text-white uppercase tracking-tight mb-3">
+                Station Not Found
+              </h1>
+              <p className="text-white/30 text-sm tracking-wide">
+                No station named <span className="font-mono text-white/50">{decodeURIComponent(stationName ?? '')}</span> exists.
+              </p>
+            </div>
+            <Link
+              to="/dev"
+              className="px-8 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 font-headline font-bold text-sm uppercase tracking-[0.2em] text-white/60 hover:text-white transition-all duration-200"
+            >
+              View All Stations
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // ── Checking stream ──────────────────────────────────────────────────────────
+  if (isStreamOnline === null) {
+    return (
+      <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
+        <TopTitle />
+      </div>
+    );
+  }
+
+  // ── Stream offline ───────────────────────────────────────────────────────────
+  if (isStreamOnline === false) {
+    return (
+      <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
+        <TopTitle />
+        <main className="flex-grow flex flex-col items-center justify-center px-6">
+          <div className="max-w-lg w-full flex flex-col items-center text-center gap-8">
+
+            <div className="w-20 h-20 rounded-full border border-error/20 bg-error/5 flex items-center justify-center">
+              <span className="material-symbols-outlined text-4xl text-error" data-icon="videocam_off">videocam_off</span>
+            </div>
+
+            <div>
+              <h1 className="font-headline text-4xl font-bold text-white uppercase tracking-tight mb-3">
+                Stream Offline
+              </h1>
+              <p className="text-white/30 text-sm tracking-wide">
+                The streamer is not reachable. Start <span className="font-mono text-white/50">streamer.py</span> and try again.
+              </p>
+            </div>
+
+            <div className="w-full p-4 rounded-xl border border-white/5 bg-white/[0.02] flex items-center gap-3">
+              <div className="w-2 h-2 bg-error rounded-full flex-shrink-0" />
+              <span className="font-mono text-xs text-white/30 truncate">{TIMESTAMP_URL}</span>
+            </div>
+
+            <button
+              onClick={runCheck}
+              className="px-8 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 font-headline font-bold text-sm uppercase tracking-[0.2em] text-white/60 hover:text-white transition-all duration-200"
+            >
+              Retry
+            </button>
+          </div>
+        </main>
       </div>
     );
   }
@@ -70,7 +190,7 @@ export default function WorkflowHUD() {
   return (
     <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
       <TopTitle />
-      <LiveFeedPopup />
+      <LiveFeedPopup streamUrl={station.hls_url} stationName={station.name} />
 
       {!isSafetyComplete ? (
         <main className="flex-grow flex flex-col items-center justify-center px-6 md:px-20 py-10 z-10 w-full mt-40 font-body">

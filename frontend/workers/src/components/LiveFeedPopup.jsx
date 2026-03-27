@@ -2,10 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import Hls from 'hls.js';
 import { useWorkflow } from '../context/WorkflowContext';
 
-// HLS stream – override via VITE_STREAM_URL if needed
-const STREAM_URL =
-  import.meta.env.VITE_STREAM_URL ||
-  'http://localhost:8888/live/index.m3u8';
+const DEFAULT_STREAM_URL =
+  import.meta.env.VITE_STREAM_URL || 'http://localhost:8888/live/index.m3u8';
 
 // HLS adds latency between what the streamer writes and what the viewer sees.
 // This offset delays step transitions to match the viewer's actual playback.
@@ -16,7 +14,8 @@ const TIMESTAMP_URL =
   import.meta.env.VITE_TIMESTAMP_URL ||
   'http://localhost:5051/position';
 
-export default function LiveFeedPopup() {
+export default function LiveFeedPopup({ streamUrl, stationName }) {
+  const STREAM_URL = streamUrl || DEFAULT_STREAM_URL;
   const { currentStepId, setCurrentStepId, workflowSteps, setIsWorkflowCompleted } = useWorkflow();
   const [liveTime, setLiveTime] = useState('0:00');
   const [streamError, setStreamError] = useState(false);
@@ -69,7 +68,7 @@ export default function LiveFeedPopup() {
         hlsRef.current = null;
       }
     };
-  }, []);
+  }, [STREAM_URL]);
 
   // ── Poll /position + drive step progression in one loop (no drift) ──────────
   useEffect(() => {
@@ -133,7 +132,7 @@ export default function LiveFeedPopup() {
       {/* Badge */}
       <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
         <div className="w-2 h-2 bg-error rounded-full animate-pulse" />
-        <span className="text-[10px] font-bold tracking-widest text-white uppercase drop-shadow-md">Unit 01 - Cam A</span>
+        <span className="text-[10px] font-bold tracking-widest text-white uppercase drop-shadow-md">{stationName ?? 'Cam A'}</span>
       </div>
 
       {/* Video timestamp from streamer */}
