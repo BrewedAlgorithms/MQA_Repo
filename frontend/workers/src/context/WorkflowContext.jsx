@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { workflowSteps } from '../data/workflowSteps';
+import { steps as workflowSteps } from '../data/hc_vid1.json';
 
 const WorkflowContext = createContext();
 

@@ -1,0 +1,95 @@
+{
+  "steps": [
+    {
+      "id": 1,
+      "title": "Dry Surface Cleaning",
+      "instructions": [
+        "Clean the door surface using a",
+        "dry wiping cloth",
+        "to remove dust and loose particles."
+      ],
+      "startTime": "0:24",
+      "endTime": "0:37"
+    },
+    {
+      "id": 2,
+      "title": "Wet Surface Cleaning",
+      "instructions": [
+        "Apply IP solution to the wiping cloth.",
+        "Clean the door surface thoroughly using the wet cloth.",
+        "Place the wiping cloth back into the tools cabinet after use."
+      ],
+      "startTime": "0:53",
+      "endTime": "1:10"
+    },
+    {
+      "id": 3,
+      "title": "Grommet Installation",
+      "instructions": [
+        "Pick the grommet.",
+        "Fix the grommet at the designated position."
+      ],
+      "startTime": "2:05",
+      "endTime": "2:27"
+    },
+    {
+      "id": 4,
+      "title": "Primary Seal Preparation",
+      "instructions": [
+        "Collect the primary seal.",
+        "Clean the primary seal properly."
+      ],
+      "startTime": "2:50",
+      "endTime": "3:18"
+    },
+    {
+      "id": 5,
+      "title": "Seal Fixing",
+      "instructions": [
+        "Fit the seal into the clamp.",
+        "Stick the seal onto the door by gradually removing the backing tape.",
+        "Press the seal firmly with both hands to ensure proper adhesion."
+      ],
+      "startTime": "3:28",
+      "endTime": "6:01"
+    },
+    {
+      "id": 6,
+      "title": "Grommet Removal",
+      "instructions": [
+        "Remove the grommet."
+      ],
+      "startTime": "6:01",
+      "endTime": "6:05"
+    },
+    {
+      "id": 7,
+      "title": "Upper Side Pressing",
+      "instructions": [
+        "Take the pressing tool.",
+        "Perform back-to-back pressing at the same position on the upper side of the door using the right hand."
+      ],
+      "startTime": "6:26",
+      "endTime": "7:00"
+    },
+    {
+      "id": 8,
+      "title": "Door Position Adjustment",
+      "instructions": [
+        "Rotate the door trolley handle.",
+        "Move the door upward."
+      ],
+      "startTime": "7:00",
+      "endTime": "7:42"
+    },
+    {
+      "id": 9,
+      "title": "Bottom Side Pressing",
+      "instructions": [
+        "Perform back-to-back pressing at the same position on the bottom side of the door."
+      ],
+      "startTime": "7:43",
+      "endTime": "8:00"
+    }
+  ]
+}
