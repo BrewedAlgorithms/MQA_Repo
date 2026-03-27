@@ -4,6 +4,7 @@ import Header from './components/Header';
 import SystemAuditLogs from './components/SystemAuditLogs/SystemAuditLogs';
 import AdminDashboard from './components/AdminDashboard/AdminDashboard';
 import SopProcessor from './components/SopProcessor/SopProcessor';
+import ManageStations from './components/ManageStations/ManageStations';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState('admin_dashboard');
@@ -15,6 +16,7 @@ function App() {
         <Header />
         {currentScreen === 'admin_dashboard' && <AdminDashboard />}
         {currentScreen === 'sop_processor' && <SopProcessor />}
+        {currentScreen === 'manage_stations' && <ManageStations />}
         {currentScreen === 'audit_logs' && <SystemAuditLogs />}
       </main>
     </div>

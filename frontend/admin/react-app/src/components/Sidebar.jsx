@@ -35,6 +35,19 @@ export default function Sidebar({ currentScreen, setCurrentScreen }) {
           <span>SOP Processor</span>
         </button>
         
+        {/* Manage Stations Link */}
+        <button 
+          onClick={() => setCurrentScreen('manage_stations')}
+          className={`w-full flex items-center px-6 py-4 transition-all gap-4 text-left ${
+            currentScreen === 'manage_stations' 
+              ? 'bg-[#20201f] text-[#8bacff] border-l-4 border-[#8bacff]'
+              : 'text-gray-400 hover:text-white hover:bg-[#20201f]'
+          }`}
+        >
+          <span className="material-symbols-outlined text-lg">precision_manufacturing</span>
+          <span>Manage Stations</span>
+        </button>
+
         {/* Logs Link */}
         <button 
           onClick={() => setCurrentScreen('audit_logs')}
