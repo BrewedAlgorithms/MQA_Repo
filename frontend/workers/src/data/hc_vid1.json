@@ -7,7 +7,7 @@
         "Clean the door surface using a dry wiping cloth to remove dust."
       ],
       "startTime": "0:24",
-      "endTime": "0:37"
+      "endTime": "0:41"
     },
     {
       "id": 2,
@@ -16,7 +16,7 @@
         "Apply IP solution to the wiping cloth."
       ],
       "startTime": "0:53",
-      "endTime": "0:58"
+      "endTime": "1:02"
     },
     {
       "id": 3,
@@ -25,7 +25,7 @@
         "Thoroughly wipe the door surface with the wet cloth."
       ],
       "startTime": "0:59",
-      "endTime": "10:10"
+      "endTime": "10:14"
     },
     {
       "id": 4,
@@ -34,7 +34,7 @@
         "Place the wiping cloth back into the cabinet and close it."
       ],
       "startTime": "10:10",
-      "endTime": "11:00"
+      "endTime": "11:04"
     },
     {
       "id": 5,
@@ -43,7 +43,7 @@
         "Pick up the grommet."
       ],
       "startTime": "2:05",
-      "endTime": "2:07"
+      "endTime": "2:11"
     },
     {
       "id": 6,
@@ -52,7 +52,7 @@
         "Secure the grommet onto the designated position on the door."
       ],
       "startTime": "2:20",
-      "endTime": "2:27"
+      "endTime": "2:31"
     },
     {
       "id": 7,
@@ -61,7 +61,7 @@
         "Retrieve the primary seal from the storage area."
       ],
       "startTime": "2:50",
-      "endTime": "2:52"
+      "endTime": "2:56"
     },
     {
       "id": 8,
@@ -70,7 +70,7 @@
         "Clean the primary seal thoroughly."
       ],
       "startTime": "2:57",
-      "endTime": "3:18"
+      "endTime": "3:22"
     },
     {
       "id": 9,
@@ -79,7 +79,7 @@
         "Properly seat the seal into the clamp assembly."
       ],
       "startTime": "3:28",
-      "endTime": "5:30"
+      "endTime": "5:34"
     },
     {
       "id": 10,
@@ -88,7 +88,7 @@
         "Remove the backing tape and attach the seal to the door."
       ],
       "startTime": "5:28",
-      "endTime": "5:30"
+      "endTime": "5:34"
     },
     {
       "id": 11,
@@ -97,7 +97,7 @@
         "Apply firm pressure on the seal using both hands for secure adhesion."
       ],
       "startTime": "5:30",
-      "endTime": "6:01"
+      "endTime": "6:05"
     },
     {
       "id": 12,
@@ -106,7 +106,7 @@
         "Carefully remove the grommet from the door."
       ],
       "startTime": "6:01",
-      "endTime": "6:05"
+      "endTime": "6:09"
     },
     {
       "id": 13,
@@ -115,7 +115,7 @@
         "Pick up the pressing tool."
       ],
       "startTime": "6:26",
-      "endTime": "6:30"
+      "endTime": "6:34"
     },
     {
       "id": 14,
@@ -124,7 +124,7 @@
         "Use the tool to press the upper section of the seal."
       ],
       "startTime": "6:33",
-      "endTime": "7:00"
+      "endTime": "7:04"
     },
     {
       "id": 15,
@@ -133,7 +133,7 @@
         "Rotate the trolley handle to adjust the door position."
       ],
       "startTime": "7:00",
-      "endTime": "7:02"
+      "endTime": "7:06"
     },
     {
       "id": 16,
@@ -142,7 +142,7 @@
         "Move the door trolley in an upward direction."
       ],
       "startTime": "7:26",
-      "endTime": "7:42"
+      "endTime": "7:46"
     }
   ]
 }
