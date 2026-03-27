@@ -17,6 +17,7 @@ ENV: C:\\Users\\tpara\\Downloads\\MAnifacturing QA\\.env
 """
 
 import argparse
+import asyncio
 import json
 import os
 import queue    
@@ -28,6 +29,7 @@ from typing import List
 import tkinter as tk
 from tkinter import font as tkfont
 #hello 
+import uvicorn
 import cv2
 from dotenv import load_dotenv
 from PIL import Image, ImageTk
@@ -35,6 +37,7 @@ from PIL import Image, ImageTk
 from action_detector import YoloPoseActionDetector
 from fusion import build_fusion_text, format_actions
 from gpt_vision import GptVisionInspector
+from server import broadcaster, get_sop, wait_for_sop
 from sop_tracker import SOPTracker
 from video_source import parse_video_source
 from yolo_detector import YoloObjectDetector, draw_detections, format_detections
@@ -55,73 +58,11 @@ if not OPENAI_API_KEY:
     sys.exit(1)
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  SOP  (admin configures this list)
+#  SOP  (populated at runtime via POST /sop)
 # ══════════════════════════════════════════════════════════════════════════════
 
-SOP_STEPS: List[str] = [
-    "Wear cap",
-    "take bottle",
-    "drink water from bottle",
-    "keep bottle on table",
-    "Remove cap",
-]
-
-# Optional per-step safety checks sent to GPT.
-# Key is 0-based SOP step index.
-STEP_SAFETY_RULES = {
-    0: [],
-    1: ["Wear cap"],
-    2: ["Wear cap"],
-    3: ["Wear cap"],
-    4: [],
-}
-
-
-def load_sop_from_json(path: str):
-    """
-    Load SOP steps and safety rules from a JSON file provided by frontend.
-
-    Expected format: a list of objects with keys:
-        title: str                (required, used as the SOP step name)
-        instructions: list[str]   (optional, unused in pipeline logic)
-        safety: list[str]         (optional, safety requirements for the step)
-
-    Returns (steps, safety_map) where:
-        steps: list[str] of step titles
-        safety_map: dict[int, list[str]] keyed by 0-based index
-    """
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except Exception as exc:
-        print(f"[ERROR] Failed to load SOP JSON: {exc}")
-        sys.exit(1)
-
-    if not isinstance(data, list):
-        print("[ERROR] SOP JSON must be a list of steps")
-        sys.exit(1)
-
-    steps: List[str] = []
-    safety_map = {}
-
-    for idx, item in enumerate(data):
-        if not isinstance(item, dict):
-            print(f"[ERROR] SOP step at index {idx} must be an object")
-            sys.exit(1)
-
-        title = str(item.get("title", "")).strip()
-        if not title:
-            print(f"[ERROR] SOP step at index {idx} is missing a title")
-            sys.exit(1)
-        steps.append(title)
-
-        safety = item.get("safety") or []
-        if not isinstance(safety, list):
-            safety = [str(safety)]
-        safety_clean = [str(s).strip() for s in safety if str(s).strip()]
-        safety_map[idx] = safety_clean
-
-    return steps, safety_map
+SOP_STEPS: List[str] = []
+STEP_SAFETY_RULES: dict = {}
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  CONFIG
@@ -352,6 +293,23 @@ class PipelineWorker:
                     "items": self.tracker.get_checklist(),
                 })
 
+                # ── SSE broadcast ──────────────────────────────────────────
+                # current_step: 1-based index of the step currently active
+                active_step_0based = (
+                    self.tracker.state.blocked_on_step
+                    if self.tracker.state.blocked and self.tracker.state.blocked_on_step is not None
+                    else self.tracker.last_completed_index + 1
+                )
+                broadcaster.push("current_step", str(active_step_0based + 1))
+
+                # safety_err: tracker-level errors (blocked / missing / out-of-order)
+                if state.alert_type in ("ERROR", "WARNING") and state.alert:
+                    clean = state.alert.replace("\n", " ").strip()
+                    broadcaster.push("safety_err", clean)
+                # GPT-level safety violation (e.g. "Please wear helmet")
+                elif parsed.get("safety_ok") is False and parsed.get("safety_msg"):
+                    broadcaster.push("safety_err", parsed["safety_msg"])
+
             except Exception as exc:
                 self.result_queue.put({
                     "type": "error",
@@ -481,7 +439,7 @@ class App(tk.Tk):
         tk.Label(prog_f, text="Progress",
                  bg=PANEL_BG, fg=TEXT_DIM,
                  font=("Courier", 9)).pack(side="left", padx=14)
-        self.progress_lbl = tk.Label(prog_f, text="0 / 6",
+        self.progress_lbl = tk.Label(prog_f, text=f"0 / {len(SOP_STEPS)}",
                                      bg=PANEL_BG, fg=TEXT_MAIN,
                                      font=("Courier", 9, "bold"))
         self.progress_lbl.pack(side="right", padx=14)
@@ -698,27 +656,29 @@ def parse_args():
         default=float(os.getenv("POSE_CONF", POSE_CONF)),
         help="YOLO pose confidence threshold",
     )
-    p.add_argument(
-        "--sop-json",
-        default=None,
-        help="Path to SOP JSON from frontend (list of steps with title and safety)",
-    )
     return p.parse_args()
+
+
+def _start_sse_server(host: str = "0.0.0.0", port: int = 8000) -> None:
+    """Start the FastAPI/uvicorn SSE server in its own event-loop thread."""
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    broadcaster.set_loop(loop)
+
+    config = uvicorn.Config(
+        "server:app",
+        host=host,
+        port=port,
+        loop="none",
+        log_level="warning",
+    )
+    server = uvicorn.Server(config)
+    loop.run_until_complete(server.serve())
 
 
 def main():
     args = parse_args()
     source = args.source
-
-    # Load SOP from frontend-provided JSON if given
-    global SOP_STEPS, STEP_SAFETY_RULES
-    if args.sop_json:
-        SOP_STEPS, STEP_SAFETY_RULES = load_sop_from_json(args.sop_json)
-        print(f"[INFO] Loaded {len(SOP_STEPS)} SOP steps from {args.sop_json}")
-
-    # Ensure safety map has entries for all steps
-    for idx in range(len(SOP_STEPS)):
-        STEP_SAFETY_RULES.setdefault(idx, [])
 
     pipeline_config = {
         "yolo_model_path": args.yolo_model,
@@ -730,6 +690,23 @@ def main():
         "pose_imgsz": args.pose_imgsz,
         "pose_conf": args.pose_conf,
     }
+
+    # Start SSE HTTP server in background
+    sse_thread = threading.Thread(
+        target=_start_sse_server, kwargs={"host": "0.0.0.0", "port": 8000},
+        daemon=True, name="sse-server",
+    )
+    sse_thread.start()
+    print("[INFO] SSE server ready")
+    print("[INFO]   POST http://localhost:8000/sop    ← send SOP config to start")
+    print("[INFO]   GET  http://localhost:8000/stream ← SSE stream")
+
+    # Block until frontend sends the SOP via POST /sop
+    print("[WAIT] Waiting for SOP config on POST /sop ...")
+    wait_for_sop()
+    global SOP_STEPS, STEP_SAFETY_RULES
+    SOP_STEPS, STEP_SAFETY_RULES = get_sop()
+    print(f"[INFO] SOP received: {len(SOP_STEPS)} steps → {SOP_STEPS}")
 
     # If numeric string → webcam
     if source.isdigit():

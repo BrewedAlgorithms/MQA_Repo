@@ -19,4 +19,7 @@ hlsAddress: :8888
 webrtcAddress: :8889
 
 # Force TCP transport (matches MTX_PROTOCOLS=tcp env var in docker-compose).
-rtspProtocols: [tcp]
+rtspTransports: [tcp]
+
+paths:
+  all:
