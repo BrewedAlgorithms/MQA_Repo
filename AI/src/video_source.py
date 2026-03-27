@@ -2,9 +2,16 @@ from typing import Generator, Tuple, Union
 
 import cv2
 
+_LIVE_PREFIXES = ("http://", "https://", "rtsp://", "rtsps://")
+
+
+def is_live_stream(source) -> bool:
+    """Return True for network stream URLs (HLS, RTSP, etc.)."""
+    return str(source).startswith(_LIVE_PREFIXES)
+
 
 def parse_video_source(source: str) -> Union[int, str]:
-    """Treat numeric input as webcam index, otherwise as file path."""
+    """Treat numeric input as webcam index, otherwise as file/URL path."""
     source = str(source).strip()
     if source.isdigit():
         return int(source)

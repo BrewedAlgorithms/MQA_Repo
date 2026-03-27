@@ -39,7 +39,7 @@ from fusion import build_fusion_text, format_actions
 from gpt_vision import GptVisionInspector
 from server import broadcaster, get_sop, wait_for_sop
 from sop_tracker import SOPTracker
-from video_source import parse_video_source
+from video_source import is_live_stream, parse_video_source
 from yolo_detector import YoloObjectDetector, draw_detections, format_detections
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -165,7 +165,16 @@ class PipelineWorker:
 
     def _video_loop(self):
         parsed = parse_video_source(self.source)
-        cap = cv2.VideoCapture(parsed)
+        live = is_live_stream(parsed)
+
+        def _open_cap():
+            c = cv2.VideoCapture(parsed)
+            if live:
+                # Minimise buffering so we process close-to-live frames
+                c.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            return c
+
+        cap = _open_cap()
         if not cap.isOpened():
             self.result_queue.put({"type": "error",
                                    "msg": f"Cannot open: {self.source}"})
@@ -184,9 +193,17 @@ class PipelineWorker:
             t0 = time.perf_counter()
             ret, frame = cap.read()
             if not ret:
-                # Loop video file; for webcam just end
-                if str(parsed).isdigit() if isinstance(parsed, str) else isinstance(parsed, int):
+                if isinstance(parsed, int):
+                    # Webcam disconnected — stop
                     break
+                if live:
+                    # HLS/RTSP glitch — reconnect and keep running
+                    print("[WARN] Stream read failed, reconnecting …")
+                    cap.release()
+                    time.sleep(1.0)
+                    cap = _open_cap()
+                    continue
+                # Video file — loop back to start
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                 continue
 
@@ -610,8 +627,10 @@ class App(tk.Tk):
 def parse_args():
     p = argparse.ArgumentParser(
         description="Manufacturing QA — SOP Inspector")
-    p.add_argument("--source", default="0",
-                   help="Video file path or webcam index (default: 0)")
+    p.add_argument("--source",
+                   default=os.getenv("RTSP") or os.getenv("HLS") or "0",
+                   help="RTSP/HLS URL, video file path, or webcam index "
+                        "(default: $RTSP → $HLS → webcam 0)")
     p.add_argument(
         "--yolo-model",
         default=os.getenv("YOLO_MODEL", YOLO_MODEL_PATH),
@@ -708,20 +727,16 @@ def main():
     SOP_STEPS, STEP_SAFETY_RULES = get_sop()
     print(f"[INFO] SOP received: {len(SOP_STEPS)} steps → {SOP_STEPS}")
 
-    # If numeric string → webcam
+    # Validate / log source
     if source.isdigit():
-        print(f"[INFO] Using webcam {source}")
+        print(f"[INFO] Source → webcam {source}")
+    elif is_live_stream(source):
+        print(f"[INFO] Source → HLS/RTSP stream  {source}")
     else:
         if not Path(source).exists():
-            # Try default video
-            default = Path(r"D:\PICT-IT\Hackhatons\MAnifacturing QA\Media\neha.mp4")
-            if default.exists():
-                source = str(default)
-                print(f"[INFO] Using default video: {source}")
-            else:
-                print(f"[ERROR] Video not found: {source}")
-                sys.exit(1)
-        print(f"[INFO] Using video: {source}")
+            print(f"[ERROR] Video file not found: {source}")
+            sys.exit(1)
+        print(f"[INFO] Source → video file  {source}")
 
     app = App(source=source, pipeline_config=pipeline_config)
     app.protocol("WM_DELETE_WINDOW", app.on_close)
