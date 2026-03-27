@@ -86,7 +86,13 @@ function HlsStreamFeed({ cam }) {
     let hls;
     import('hls.js').then(({ default: Hls }) => {
       if (Hls.isSupported()) {
-        hls = new Hls({ liveSyncDurationCount: 1, liveMaxLatencyDurationCount: 3, lowLatencyMode: true });
+        hls = new Hls({
+          lowLatencyMode: true,
+          liveSyncDurationCount: 1,
+          liveMaxLatencyDurationCount: 2,
+          maxBufferLength: 1,
+          maxMaxBufferLength: 2,
+        });
         hls.loadSource(cam.hlsUrl);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); setStreamError(false); });

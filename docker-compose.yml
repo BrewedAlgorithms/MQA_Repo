@@ -30,8 +30,8 @@ services:
     image: bluenviron/mediamtx:latest
     container_name: mqa_mediamtx
     restart: unless-stopped
-    environment:
-      - MTX_PROTOCOLS=tcp
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml:ro
     ports:
       - "8554:8554"   # RTSP
       - "8888:8888"   # HLS

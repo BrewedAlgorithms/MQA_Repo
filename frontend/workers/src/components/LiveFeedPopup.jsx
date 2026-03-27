@@ -34,9 +34,12 @@ export default function LiveFeedPopup() {
 
     if (Hls.isSupported()) {
       hls = new Hls({
-        liveSyncDurationCount: 1,
-        liveMaxLatencyDurationCount: 3,
         lowLatencyMode: true,
+        liveSyncDurationCount: 1,
+        liveMaxLatencyDurationCount: 2,
+        // Cap how much video the browser buffers ahead (keeps playback at the live edge)
+        maxBufferLength: 1,
+        maxMaxBufferLength: 2,
       });
       hlsRef.current = hls;
       hls.loadSource(STREAM_URL);

@@ -1,0 +1,22 @@
+# MediaMTX – low-latency configuration
+# Reduces HLS end-to-end lag from ~6 s (default) to ~1-2 s.
+
+# ── HLS ────────────────────────────────────────────────────────────────────────
+# Each segment is 0.5 s (default: 2 s).  Browsers can start playback sooner
+# and stay closer to the live edge.
+hlsSegmentDuration: 0.5s
+
+# Keep only 3 segments in the playlist (default: 7).
+# Fewer segments = smaller initial buffer the browser fills before playback.
+hlsSegmentCount: 3
+
+# LL-HLS partial segment duration (sub-part chunks for near-real-time delivery).
+hlsPartDuration: 0.2s
+
+# Bind addresses (keep defaults – mapped via docker-compose ports).
+rtspAddress: :8554
+hlsAddress: :8888
+webrtcAddress: :8889
+
+# Force TCP transport (matches MTX_PROTOCOLS=tcp env var in docker-compose).
+rtspProtocols: [tcp]

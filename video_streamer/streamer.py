@@ -1,10 +1,17 @@
 """
 streamer.py – RTSP video streamer via FFmpeg + MediaMTX
-Asks at startup whether to stream a video file or the webcam,
-then pipes frames into FFmpeg which pushes RTSP to MediaMTX.
 
-  RTSP:      rtsp://localhost:8554/live
-  HLS:       http://localhost:8888/live/index.m3u8
+Two modes:
+  1. Video file  – FFmpeg reads & loops the file natively (no OpenCV pipe).
+  2. Webcam      – OpenCV captures frames and pipes them into FFmpeg.
+
+Each instance asks for a unique stream name at startup so multiple instances
+can run in parallel, each on its own RTSP path:
+
+  Instance A → rtsp://localhost:8554/camera1
+  Instance B → rtsp://localhost:8554/camera2
+
+  HLS:       http://localhost:8888/<name>/index.m3u8
   Timestamp: http://localhost:5051/position  → {"seconds": 42.5, "time": "0:42"}
 """
 
@@ -15,13 +22,12 @@ import os
 import sys
 import json
 import threading
+import fcntl
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 MEDIAMTX_HOST  = os.environ.get("MEDIAMTX_HOST", "localhost")
 RTSP_PORT      = int(os.environ.get("RTSP_PORT", 8554))
-STREAM_PATH    = os.environ.get("STREAM_PATH", "live")
-RTSP_URL       = f"rtsp://{MEDIAMTX_HOST}:{RTSP_PORT}/{STREAM_PATH}"
 TIMESTAMP_PORT = int(os.environ.get("TIMESTAMP_PORT", 5051))
 
 _SCRIPT_DIR        = os.path.dirname(os.path.abspath(__file__))
@@ -29,12 +35,12 @@ DEFAULT_VIDEO_PATH = os.path.join(_SCRIPT_DIR, "..", "assets", "1.mp4")
 
 # Shared state – written by the stream loop, read by the HTTP server
 _position_lock    = threading.Lock()
-_position_seconds = 0.0   # current playback position in seconds
+_position_seconds = 0.0
 
 
 # ── Timestamp HTTP server ──────────────────────────────────────────────────────
 class TimestampHandler(BaseHTTPRequestHandler):
-    def log_message(self, format, *args):  # suppress request noise
+    def log_message(self, format, *args):
         pass
 
     def _cors(self):
@@ -72,8 +78,7 @@ class _ReuseHTTPServer(HTTPServer):
     allow_reuse_address = True
 
 
-def _start_timestamp_server(max_tries: int = 10) -> int:
-    """Try TIMESTAMP_PORT, then TIMESTAMP_PORT+1 … until a free port is found."""
+def _start_timestamp_server(max_tries: int = 20) -> int:
     for port in range(TIMESTAMP_PORT, TIMESTAMP_PORT + max_tries):
         try:
             server = _ReuseHTTPServer(("0.0.0.0", port), TimestampHandler)
@@ -88,10 +93,26 @@ def _start_timestamp_server(max_tries: int = 10) -> int:
     )
 
 
-# ── Source selection ───────────────────────────────────────────────────────────
-def get_source_choice():
+# ── Startup prompts ────────────────────────────────────────────────────────────
+def get_stream_name() -> str:
+    """Ask for a unique stream name (used as the RTSP/HLS path segment)."""
     print("\n=== MQA Video Streamer (RTSP) ===")
-    print("What would you like to stream?")
+    print("Stream name (used as the RTSP path, e.g. 'camera1', 'line2', 'webcam').")
+    print("Each running instance must use a different name.")
+    while True:
+        name = input("Stream name [live]: ").strip()
+        if not name:
+            name = "live"
+        # Allow only URL-safe characters
+        safe = name.replace(" ", "_")
+        if safe != name:
+            print(f"[INFO] Using '{safe}' (spaces replaced with underscores).")
+            name = safe
+        return name
+
+
+def get_source_choice() -> tuple:
+    print("\nWhat would you like to stream?")
     print(f"  1. Video file  ({os.path.normpath(DEFAULT_VIDEO_PATH)})")
     print("  2. Webcam")
     while True:
@@ -106,8 +127,125 @@ def get_source_choice():
             print("Invalid choice. Please enter 1 or 2.")
 
 
+# ── Per-path single-instance lock ─────────────────────────────────────────────
+def _acquire_lock(stream_name: str) -> object:
+    """
+    Exclusively lock a per-path file so two instances cannot publish to the
+    same RTSP path simultaneously.  Different names → different lock files →
+    can run in parallel without conflict.
+    """
+    lock_path = os.path.join(_SCRIPT_DIR, f".streamer-{stream_name}.lock")
+    fh = open(lock_path, "w")
+    try:
+        fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        fh.close()
+        print(f"[ERROR] A streamer is already publishing to path '{stream_name}'.")
+        print(f"        Stop it first (Ctrl+C), or choose a different stream name.")
+        sys.exit(1)
+    fh.write(str(os.getpid()))
+    fh.flush()
+    return fh, lock_path
+
+
+def _release_lock(fh, lock_path: str) -> None:
+    try:
+        fcntl.flock(fh, fcntl.LOCK_UN)
+        fh.close()
+        os.unlink(lock_path)
+    except Exception:
+        pass
+
+
+# ── Video file helpers ─────────────────────────────────────────────────────────
+def get_video_duration(path: str) -> float:
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe", "-v", "error",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                path,
+            ],
+            capture_output=True, text=True, timeout=10,
+        )
+        return float(result.stdout.strip())
+    except Exception:
+        return 0.0
+
+
+def _track_file_position(duration: float, stop: threading.Event) -> None:
+    global _position_seconds
+    start = time.time()
+    while not stop.is_set():
+        elapsed = time.time() - start
+        pos = (elapsed % duration) if duration > 0 else elapsed
+        with _position_lock:
+            _position_seconds = pos
+        time.sleep(0.05)
+
+
+# ── Video file streaming (FFmpeg-native, no OpenCV pipe) ───────────────────────
+def stream_file(video_path: str, rtsp_url: str, stream_name: str,
+                timestamp_port: int) -> None:
+    duration = get_video_duration(video_path)
+
+    cmd = [
+        "ffmpeg",
+        "-loglevel", "warning",
+        "-stream_loop", "-1",
+        "-re",
+        "-i", video_path,
+        "-c:v", "libx264",
+        "-preset", "ultrafast",
+        "-tune", "zerolatency",
+        "-pix_fmt", "yuv420p",
+        "-an",
+        "-f", "rtsp",
+        "-rtsp_transport", "tcp",
+        rtsp_url,
+    ]
+
+    print(f"\n[INFO] Streaming video file '{video_path}'")
+    print(f"[INFO] RTSP      → {rtsp_url}")
+    print(f"[INFO] HLS       → http://{MEDIAMTX_HOST}:8888/{stream_name}/index.m3u8")
+    print(f"[INFO] Timestamp → http://localhost:{timestamp_port}/position")
+    print("[INFO] Press Ctrl+C to stop.\n")
+
+    stop = threading.Event()
+    if duration > 0:
+        threading.Thread(
+            target=_track_file_position, args=(duration, stop), daemon=True
+        ).start()
+
+    while True:
+        proc = subprocess.Popen(cmd)
+        try:
+            proc.wait()
+        except KeyboardInterrupt:
+            proc.terminate()
+            proc.wait()
+            stop.set()
+            print("\n[INFO] Streamer stopped.")
+            return
+
+        stop.set()
+        if proc.returncode == 0:
+            return
+
+        stop.clear()
+        print("[WARN] FFmpeg exited unexpectedly — reconnecting in 2s…")
+        time.sleep(2)
+        print("[INFO] Restarting FFmpeg…")
+        stop = threading.Event()
+        if duration > 0:
+            threading.Thread(
+                target=_track_file_position, args=(duration, stop), daemon=True
+            ).start()
+
+
 # ── Webcam helper ──────────────────────────────────────────────────────────────
-def open_webcam(index: int, timeout: float = 6.0) -> cv2.VideoCapture:
+def open_webcam(index: int, timeout: float = 10.0) -> cv2.VideoCapture:
     print(f"[INFO] Opening webcam {index}…")
     print("[INFO] macOS: if a permission dialog appears, click OK then wait a moment.")
     deadline = time.time() + timeout
@@ -115,6 +253,8 @@ def open_webcam(index: int, timeout: float = 6.0) -> cv2.VideoCapture:
     while time.time() < deadline:
         cap = cv2.VideoCapture(index)
         if cap.isOpened():
+            # Minimize internal frame buffer so we always read the freshest frame
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             return cap
         cap.release()
         time.sleep(1.0)
@@ -122,91 +262,105 @@ def open_webcam(index: int, timeout: float = 6.0) -> cv2.VideoCapture:
     return cap
 
 
-# ── FFmpeg subprocess builder ──────────────────────────────────────────────────
-def build_ffmpeg_cmd(width: int, height: int, fps: float) -> list[str]:
-    return [
+# ── Webcam streaming (OpenCV → FFmpeg stdin pipe) ──────────────────────────────
+# Fixed output rate: 2 fps.  A background thread reads the webcam at its native
+# rate (draining the internal buffer), so the writer always gets the freshest
+# frame with no blocking drain overhead.
+WEBCAM_OUTPUT_FPS = 30
+
+
+def stream_webcam(capture: cv2.VideoCapture, rtsp_url: str, stream_name: str,
+                  timestamp_port: int) -> None:
+
+    width  = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    width  = width  if width  % 2 == 0 else width  - 1
+    height = height if height % 2 == 0 else height - 1
+
+    print(f"\n[INFO] Streaming webcam @ {WEBCAM_OUTPUT_FPS} fps")
+    print(f"[INFO] RTSP      → {rtsp_url}")
+    print(f"[INFO] HLS       → http://{MEDIAMTX_HOST}:8888/{stream_name}/index.m3u8")
+    print(f"[INFO] Timestamp → http://localhost:{timestamp_port}/position")
+    print("[INFO] Press Ctrl+C to stop.\n")
+
+    # ── Background capture thread ────────────────────────────────────────────
+    # Reads the webcam as fast as possible so the OS buffer never fills up.
+    # Only the latest decoded frame is kept; older ones are discarded.
+    _latest_frame: list = [None]   # list so the closure can rebind
+    _cap_lock  = threading.Lock()
+    _cap_stop  = threading.Event()
+
+    def _capture_loop() -> None:
+        while not _cap_stop.is_set():
+            ret, frame = capture.read()
+            if not ret:
+                break
+            with _cap_lock:
+                _latest_frame[0] = frame
+
+    cap_thread = threading.Thread(target=_capture_loop, daemon=True)
+    cap_thread.start()
+
+    # Wait until the first frame arrives
+    deadline = time.time() + 5.0
+    while time.time() < deadline:
+        with _cap_lock:
+            if _latest_frame[0] is not None:
+                break
+        time.sleep(0.05)
+    else:
+        print("[ERROR] No frame received from webcam within 5 s.")
+        _cap_stop.set()
+        capture.release()
+        return
+
+    # ── FFmpeg command ───────────────────────────────────────────────────────
+    # GOP = WEBCAM_OUTPUT_FPS means one keyframe per second, keeping HLS
+    # segments short without hammering the encoder with all-I-frame streams.
+    gop = WEBCAM_OUTPUT_FPS
+
+    cmd = [
         "ffmpeg",
         "-loglevel", "warning",
         "-f", "rawvideo",
         "-pix_fmt", "bgr24",
         "-s", f"{width}x{height}",
-        "-r", str(fps),
+        "-r", str(WEBCAM_OUTPUT_FPS),
         "-i", "pipe:0",
         "-c:v", "libx264",
         "-preset", "ultrafast",
         "-tune", "zerolatency",
         "-pix_fmt", "yuv420p",
+        "-g", str(gop),
+        "-keyint_min", str(gop),
+        "-sc_threshold", "0",
         "-f", "rtsp",
         "-rtsp_transport", "tcp",
-        RTSP_URL,
+        rtsp_url,
     ]
 
+    frame_interval = 1.0 / WEBCAM_OUTPUT_FPS
+    start_time     = time.time()
+    frame_count    = 0
 
-# ── Main streaming loop ────────────────────────────────────────────────────────
-def stream(capture: cv2.VideoCapture, source_label: str, timestamp_port: int = TIMESTAMP_PORT):
-    global _position_seconds
-
-    width  = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps    = capture.get(cv2.CAP_PROP_FPS)
-    if not fps or fps <= 0:
-        fps = 30.0
-
-    # Ensure even dimensions (H.264 requirement)
-    width  = width  if width  % 2 == 0 else width  - 1
-    height = height if height % 2 == 0 else height - 1
-
-    cmd = build_ffmpeg_cmd(width, height, fps)
-
-    print(f"\n[INFO] Streaming {source_label}")
-    print(f"[INFO] RTSP      → {RTSP_URL}")
-    print(f"[INFO] HLS       → http://{MEDIAMTX_HOST}:8888/{STREAM_PATH}/index.m3u8")
-    print(f"[INFO] Timestamp → http://localhost:{timestamp_port}/position")
-    print("[INFO] Press Ctrl+C to stop.\n")
-
-    is_video_file  = capture.get(cv2.CAP_PROP_FRAME_COUNT) > 0
-    frame_interval = 1.0 / fps
-
-    # Outer reconnect loop — if MediaMTX drops this publisher (e.g. a new
-    # streamer took the slot), FFmpeg dies but we restart instead of crashing.
     while True:
         proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-        next_frame_time = time.time()
         pipe_broken = False
-        last_frame = None  # held frame written during the seek gap on video loop
 
         try:
             while True:
-                ret, frame = capture.read()
-                if not ret:
-                    if is_video_file:
-                        capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                        next_frame_time = time.time()
-                        with _position_lock:
-                            _position_seconds = 0.0
-                        # Feed the last good frame to FFmpeg while OpenCV is
-                        # seeking; without this, the stdin gap causes MediaMTX
-                        # to close the session and FFmpeg exits with SIGPIPE.
-                        if last_frame is not None:
-                            frame = last_frame
-                        else:
-                            time.sleep(0.01)
-                            continue
-                    else:
-                        print("[WARN] Webcam read failed — stopping.")
-                        return
-                else:
-                    last_frame = frame
+                # Grab the latest frame (already captured by background thread)
+                with _cap_lock:
+                    frame = _latest_frame[0]
 
-                pos_ms = capture.get(cv2.CAP_PROP_POS_MSEC)
-                with _position_lock:
-                    _position_seconds = pos_ms / 1000.0
+                if frame is None:
+                    time.sleep(0.01)
+                    continue
 
                 if frame.shape[1] != width or frame.shape[0] != height:
                     frame = cv2.resize(frame, (width, height))
 
-                # Guard: detect FFmpeg death before attempting a write so we
-                # reconnect immediately instead of waiting for the next frame.
                 if proc.poll() is not None:
                     print("[WARN] FFmpeg exited unexpectedly — reconnecting in 2s…")
                     pipe_broken = True
@@ -219,15 +373,20 @@ def stream(capture: cv2.VideoCapture, source_label: str, timestamp_port: int = T
                     pipe_broken = True
                     break
 
-                next_frame_time += frame_interval
+                # Track elapsed time for the timestamp API
+                with _position_lock:
+                    _position_seconds = time.time() - start_time
+
+                # Sleep precisely until the next frame slot
+                frame_count += 1
+                next_frame_time = start_time + frame_count * frame_interval
                 sleep_dur = next_frame_time - time.time()
                 if sleep_dur > 0:
                     time.sleep(sleep_dur)
-                else:
-                    next_frame_time = time.time()
 
         except KeyboardInterrupt:
             print("\n[INFO] Streamer stopped.")
+            _cap_stop.set()
             try:
                 proc.stdin.close()
             except Exception:
@@ -247,35 +406,38 @@ def stream(capture: cv2.VideoCapture, source_label: str, timestamp_port: int = T
             print("[INFO] Restarting FFmpeg…")
             continue
 
-        # Any other exit (e.g. webcam stopped) — don't loop
+        _cap_stop.set()
         capture.release()
         return
 
 
 # ── Entry point ────────────────────────────────────────────────────────────────
 def main():
+    stream_name = get_stream_name()
+    rtsp_url    = f"rtsp://{MEDIAMTX_HOST}:{RTSP_PORT}/{stream_name}"
+
+    fh, lock_path = _acquire_lock(stream_name)
     source_type, source = get_source_choice()
-
-    if source_type == "webcam":
-        capture = open_webcam(source)
-    else:
-        capture = cv2.VideoCapture(source)
-
-    if not capture or not capture.isOpened():
-        print(f"[ERROR] Could not open source: {source}")
-        if source_type == "webcam":
-            print("[HINT] Go to System Settings → Privacy & Security → Camera")
-            print("       and grant camera access to Terminal (or your Python app).")
-        sys.exit(1)
-
-    label = (
-        f"video file '{source}'"
-        if source_type == "video"
-        else f"webcam (index {source})"
-    )
-
     bound_port = _start_timestamp_server()
-    stream(capture, label, timestamp_port=bound_port)
+
+    try:
+        if source_type == "video":
+            video_path = os.path.abspath(source)
+            if not os.path.isfile(video_path):
+                print(f"[ERROR] Video file not found: {video_path}")
+                sys.exit(1)
+            stream_file(video_path, rtsp_url, stream_name, timestamp_port=bound_port)
+
+        else:
+            capture = open_webcam(source)
+            if not capture or not capture.isOpened():
+                print(f"[ERROR] Could not open webcam index {source}")
+                print("[HINT] Go to System Settings → Privacy & Security → Camera")
+                print("       and grant camera access to Terminal (or your Python app).")
+                sys.exit(1)
+            stream_webcam(capture, rtsp_url, stream_name, timestamp_port=bound_port)
+    finally:
+        _release_lock(fh, lock_path)
 
 
 if __name__ == "__main__":
