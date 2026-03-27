@@ -7,6 +7,10 @@ const STREAM_URL =
   import.meta.env.VITE_STREAM_URL ||
   'http://localhost:8888/live/index.m3u8';
 
+// HLS adds latency between what the streamer writes and what the viewer sees.
+// This offset delays step transitions to match the viewer's actual playback.
+const HLS_LAG_SECONDS = 3;
+
 // Timestamp API served by streamer.py alongside the RTSP push
 const TIMESTAMP_URL =
   import.meta.env.VITE_TIMESTAMP_URL ||
@@ -64,36 +68,29 @@ export default function LiveFeedPopup() {
     };
   }, []);
 
-  // ── Poll streamer.py /position for exact video timestamp ───────────────────
+  // ── Poll /position + drive step progression in one loop (no drift) ──────────
   useEffect(() => {
-    const poll = async () => {
+    const timeToSeconds = (t) => {
+      if (!t) return 0;
+      const [m, s] = t.split(':').map(Number);
+      return m * 60 + s;
+    };
+
+    const tick = async () => {
+      // 1. Fetch streamer position
       try {
         const res = await fetch(TIMESTAMP_URL);
-        if (!res.ok) return;
-        const { seconds, time } = await res.json();
-        elapsedRef.current = seconds;
-        setLiveTime(time);
+        if (res.ok) {
+          const { seconds, time } = await res.json();
+          elapsedRef.current = seconds;
+          setLiveTime(time);
+        }
       } catch {
         // streamer not running yet — keep last known value
       }
-    };
 
-    poll(); // immediate first fetch
-    const id = setInterval(poll, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  // ── Workflow step progression driven by video position ──────────────────────
-  useEffect(() => {
-    const tick = () => {
-      const elapsed = elapsedRef.current;
-
-      const timeToSeconds = (t) => {
-        if (!t) return 0;
-        const [m, s] = t.split(':').map(Number);
-        return m * 60 + s;
-      };
-
+      // 2. Compare lag-adjusted position against step endTimes
+      const elapsed = elapsedRef.current - HLS_LAG_SECONDS;
       const targetStep = workflowSteps.find(s => elapsed < timeToSeconds(s.endTime));
       if (targetStep) {
         setIsWorkflowCompleted(false);
@@ -104,7 +101,7 @@ export default function LiveFeedPopup() {
       }
     };
 
-    tick();
+    tick(); // immediate first run
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [workflowSteps, currentStepId, setCurrentStepId, setIsWorkflowCompleted]);
