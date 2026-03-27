@@ -15,7 +15,7 @@ export default function StepTracker() {
 
           if (isCompleted) {
             return (
-              <div key={step.id} className="w-10 h-10 border-2 border-emerald-500/50 bg-emerald-500/10 rounded flex items-center justify-center transition-all duration-300 cursor-pointer">
+              <div key={step.id} className="w-10 h-10 border-2 border-emerald-500/50 bg-emerald-500/10 rounded flex items-center justify-center transition-all duration-300">
                 <span className="material-symbols-outlined text-emerald-400 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
               </div>
             );

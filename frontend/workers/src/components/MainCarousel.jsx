@@ -3,7 +3,7 @@ import StepTracker from './StepTracker';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function MainCarousel() {
-  const { currentStepId, nextStep, prevStep, workflowSteps, totalSteps } = useWorkflow();
+  const { currentStepId, workflowSteps, totalSteps } = useWorkflow();
 
   const prevStepData = currentStepId > 1 ? workflowSteps[currentStepId - 2] : null;
   const currentStepData = workflowSteps[currentStepId - 1];
@@ -14,15 +14,6 @@ export default function MainCarousel() {
       {/* Carousel Container */}
       <div className="relative w-full max-w-6xl flex items-center justify-center gap-0 md:gap-8 h-[550px]">
         
-        {/* Floating Previous Button */}
-        {currentStepId > 1 && (
-          <button 
-            onClick={prevStep}
-            className="absolute left-0 z-50 bg-surface-container-high border border-white/10 w-12 h-12 rounded-full flex items-center justify-center shadow-2xl hover:bg-surface-bright transition-all"
-          >
-            <span className="material-symbols-outlined text-white">chevron_left</span>
-          </button>
-        )}
 
         {/* Left Card (Previous) */}
         {prevStepData ? (
@@ -93,15 +84,6 @@ export default function MainCarousel() {
           <div className="hidden md:block shrink-0 w-64 h-80 opacity-0 translate-x-8 scale-90"></div>
         )}
 
-        {/* Floating Next Button */}
-        {currentStepId < totalSteps && (
-          <button 
-            onClick={nextStep}
-            className="absolute right-0 z-50 bg-surface-container-high border border-white/10 w-12 h-12 rounded-full flex items-center justify-center shadow-2xl hover:bg-surface-bright transition-all"
-          >
-            <span className="material-symbols-outlined text-white">chevron_right</span>
-          </button>
-        )}
 
       </div>
 

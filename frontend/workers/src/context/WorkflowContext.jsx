@@ -6,13 +6,6 @@ const WorkflowContext = createContext();
 export function WorkflowProvider({ children }) {
   const [currentStepId, setCurrentStepId] = useState(1);
 
-  const nextStep = () => {
-    if (currentStepId < workflowSteps.length) setCurrentStepId(prev => prev + 1);
-  };
-
-  const prevStep = () => {
-    if (currentStepId > 1) setCurrentStepId(prev => prev - 1);
-  };
 
   const currentStepData = workflowSteps.find(s => s.id === currentStepId);
 
@@ -20,8 +13,6 @@ export function WorkflowProvider({ children }) {
     <WorkflowContext.Provider value={{
       currentStepId,
       setCurrentStepId,
-      nextStep,
-      prevStep,
       currentStepData,
       totalSteps: workflowSteps.length,
       workflowSteps
