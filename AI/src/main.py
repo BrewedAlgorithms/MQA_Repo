@@ -266,7 +266,7 @@ class PipelineWorker:
 
     def _video_loop_from_streamer(self):
         """Read frames from WebcamHLSStreamer (raw webcam, not decoded HLS)."""
-        target_fps = 30.0
+        target_fps = 10.0   # hard limit – keeps delay minimal
         frame_delay = 1.0 / target_fps
 
         last_pose_t = 0.0
@@ -421,6 +421,11 @@ class PipelineWorker:
                     broadcaster.push("safety_err", clean)
                 elif parsed.get("safety_ok") is False and parsed.get("safety_msg"):
                     broadcaster.push("safety_err", parsed["safety_msg"])
+
+                # Broadcast action text to frontend
+                action_text = parsed.get("action", "")
+                if action_text and action_text != "—":
+                    broadcaster.push("action", action_text)
 
             except Exception as exc:
                 self.result_queue.put({

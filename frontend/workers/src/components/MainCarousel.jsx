@@ -1,9 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import StepTracker from './StepTracker';
 import { useWorkflow } from '../context/WorkflowContext';
 
 export default function MainCarousel() {
-  const { currentStepId, workflowSteps, totalSteps, isWorkflowCompleted } = useWorkflow();
+  const { currentStepId, workflowSteps, totalSteps, isWorkflowCompleted, aiAction, aiMode } = useWorkflow();
+
+  // ── Typing animation for AI action text ──────────────────────────────────
+  const [displayedText, setDisplayedText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const prevActionRef = useRef('');
+
+  useEffect(() => {
+    if (!aiAction || aiAction === prevActionRef.current) return;
+    prevActionRef.current = aiAction;
+    setIsTyping(true);
+    setDisplayedText('');
+
+    let i = 0;
+    const chars = aiAction.split('');
+    const timer = setInterval(() => {
+      i++;
+      setDisplayedText(chars.slice(0, i).join(''));
+      if (i >= chars.length) {
+        clearInterval(timer);
+        setIsTyping(false);
+      }
+    }, 20); // fast typing speed
+
+    return () => clearInterval(timer);
+  }, [aiAction]);
 
   const prevStepData = currentStepId > 1 ? workflowSteps[currentStepId - 2] : null;
   const currentStepData = workflowSteps[currentStepId - 1];
@@ -75,6 +100,25 @@ export default function MainCarousel() {
                   {item}
                 </span>
               ))}
+            </div>
+          )}
+
+          {/* AI Action Bar */}
+          {aiMode && displayedText && (
+            <div className="mt-4 pt-4 border-t border-white/5">
+              <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-primary/5 border border-primary/15">
+                <span
+                  className="material-symbols-outlined text-primary text-lg flex-shrink-0 mt-0.5"
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >smart_toy</span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-primary/60 mb-1">AI Action</p>
+                  <p className="text-sm text-on-surface/90 leading-relaxed">
+                    {displayedText}
+                    {isTyping && <span className="inline-block w-0.5 h-4 bg-primary ml-0.5 animate-pulse align-middle" />}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>

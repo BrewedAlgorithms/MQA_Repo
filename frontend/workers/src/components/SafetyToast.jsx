@@ -14,6 +14,59 @@ export default function SafetyToast() {
   const progressIntervalRef = useRef(null);
   const startTimeRef = useRef(null);
 
+  // ── Voice narration (Web Speech API) ─────────────────────────────────────
+  const speakRef   = useRef(null);
+  const voicesRef  = useRef([]);
+
+  // Pre-load and cache voices — browsers populate them asynchronously
+  useEffect(() => {
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+
+    const load = () => { voicesRef.current = synth.getVoices(); };
+    load(); // may already be available (e.g. some Chromium versions)
+    synth.addEventListener('voiceschanged', load);
+    return () => synth.removeEventListener('voiceschanged', load);
+  }, []);
+
+  const speakAlert = useCallback((msg) => {
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+
+    synth.cancel();
+
+    const doSpeak = () => {
+      const utter = new SpeechSynthesisUtterance(`Safety Alert. ${msg}`);
+      utter.rate  = 1.0;
+      utter.pitch = 0.85;
+      utter.volume = 1.0;
+
+      const malePrefs = [
+        'Google UK English Male',
+        'Microsoft David',
+        'Daniel',
+        'Alex',
+      ];
+      const voices = voicesRef.current.length
+        ? voicesRef.current
+        : synth.getVoices();
+      const preferred = malePrefs
+        .map(name => voices.find(v => v.name === name))
+        .find(Boolean);
+      if (preferred) utter.voice = preferred;
+
+      speakRef.current = utter;
+      synth.speak(utter);
+    };
+
+    // If voices not yet loaded, wait briefly then speak
+    if (voicesRef.current.length === 0) {
+      setTimeout(doSpeak, 300);
+    } else {
+      doSpeak();
+    }
+  }, []);
+
   // Stable show function — used by both backend polling and local (HC) trigger
   const showToast = useCallback((msg) => {
     clearTimeout(hideTimerRef.current);
@@ -22,6 +75,7 @@ export default function SafetyToast() {
     setMessage(msg);
     setProgress(100);
     startTimeRef.current = Date.now();
+    speakAlert(msg);
 
     progressIntervalRef.current = setInterval(() => {
       const elapsed = Date.now() - startTimeRef.current;
@@ -32,7 +86,7 @@ export default function SafetyToast() {
       setMessage(null);
       clearInterval(progressIntervalRef.current);
     }, SHOW_MS);
-  }, []);
+  }, [speakAlert]);
 
   // ── Local trigger (HC schedule via WorkflowHUD) ──────────────────────────────
   useEffect(() => {

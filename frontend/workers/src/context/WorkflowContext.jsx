@@ -19,6 +19,9 @@ export function WorkflowProvider({ children }) {
   const [aiMode, setAiMode] = useState(false);
   const enableAiMode = useCallback(() => setAiMode(true), []);
 
+  // AI action text — latest GPT action broadcast via SSE
+  const [aiAction, setAiAction] = useState('');
+
   // Keep refs so SSE listeners always see the latest values without stale closures
   const totalStepsRef = useRef(0);
   useEffect(() => { totalStepsRef.current = config.steps.length; }, [config.steps.length]);
@@ -65,6 +68,10 @@ export function WorkflowProvider({ children }) {
       if (e.data?.trim()) triggerSafetyToast(e.data.trim());
     });
 
+    es.addEventListener('action', (e) => {
+      if (e.data?.trim()) setAiAction(e.data.trim());
+    });
+
     return () => es.close();
   }, [aiMode]);
 
@@ -109,6 +116,7 @@ export function WorkflowProvider({ children }) {
       stationName: config.stationName,
       aiMode,
       enableAiMode,
+      aiAction,
     }}>
       {children}
     </WorkflowContext.Provider>
