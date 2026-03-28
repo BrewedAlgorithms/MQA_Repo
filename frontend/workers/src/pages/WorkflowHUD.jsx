@@ -106,8 +106,21 @@ export default function WorkflowHUD() {
 
     // ── Non-HC (webcam / live feed) ─────────────────────────────────────────
     if (!station.hc) {
-      setIsStreamOnline(true); // no stream check needed for non-HC
-      const loadSop = async () => {
+      // Check HLS stream reachability before showing HUD
+      const checkNonHcStream = async () => {
+        try {
+          const hlsUrl = station.hls_url;
+          if (hlsUrl) {
+            const res = await fetch(hlsUrl, { method: 'HEAD', cache: 'no-store' });
+            if (!res.ok) { setIsStreamOnline(false); return; }
+          }
+          setIsStreamOnline(true);
+        } catch {
+          setIsStreamOnline(false);
+          return;
+        }
+
+        // Stream OK → load SOP
         try {
           const res = await fetch(`${API_URL}/api/stations/${station.id}/sops`);
           if (!res.ok) throw new Error();
@@ -125,7 +138,7 @@ export default function WorkflowHUD() {
           setSopSteps(steps);
           configureWorkflow(steps, station.name, false);
 
-          // Send SOP to AI and open SSE when this is the AI-monitored station
+          // Send SOP to AI when this is the AI-monitored station
           if (station.name === AI_STATION && steps.length > 0) {
             aiStepsRef.current = steps;
             await postSopToAi(steps);
@@ -135,11 +148,12 @@ export default function WorkflowHUD() {
           configureWorkflow([], station.name, false);
         }
       };
-      loadSop();
+      checkNonHcStream();
       return () => { configuredRef.current = false; };
     }
 
-    // ── HC (video file stream) ────────────────────────────────────────────────
+    // ── HC (video file stream) — no stream check, go straight to online ────────
+    setIsStreamOnline(true);
     configureWorkflow(hcJsonSteps, station.name, true);
 
     const safetyTimers = [];
