@@ -106,21 +106,8 @@ export default function WorkflowHUD() {
 
     // ── Non-HC (webcam / live feed) ─────────────────────────────────────────
     if (!station.hc) {
-      // Check HLS stream reachability before showing HUD
-      const checkNonHcStream = async () => {
-        try {
-          const hlsUrl = station.hls_url;
-          if (hlsUrl) {
-            const res = await fetch(hlsUrl, { method: 'HEAD', cache: 'no-store' });
-            if (!res.ok) { setIsStreamOnline(false); return; }
-          }
-          setIsStreamOnline(true);
-        } catch {
-          setIsStreamOnline(false);
-          return;
-        }
-
-        // Stream OK → load SOP
+      setIsStreamOnline(true); // no stream check needed for non-HC
+      const loadSop = async () => {
         try {
           const res = await fetch(`${API_URL}/api/stations/${station.id}/sops`);
           if (!res.ok) throw new Error();
@@ -138,7 +125,7 @@ export default function WorkflowHUD() {
           setSopSteps(steps);
           configureWorkflow(steps, station.name, false);
 
-          // Send SOP to AI when this is the AI-monitored station
+          // Send SOP to AI and open SSE when this is the AI-monitored station
           if (station.name === AI_STATION && steps.length > 0) {
             aiStepsRef.current = steps;
             await postSopToAi(steps);
@@ -148,13 +135,15 @@ export default function WorkflowHUD() {
           configureWorkflow([], station.name, false);
         }
       };
-      checkNonHcStream();
+      loadSop();
       return () => { configuredRef.current = false; };
     }
 
-    // ── HC (video file stream) — no stream check, go straight to online ────────
-    setIsStreamOnline(true);
+    // ── HC (video file stream) ────────────────────────────────────────────────
     configureWorkflow(hcJsonSteps, station.name, true);
+
+    // HC stations always show the HUD — no stream dependency
+    setIsStreamOnline(true);
 
     const safetyTimers = [];
     const tsUrl = station.timestamp_url;
@@ -163,13 +152,11 @@ export default function WorkflowHUD() {
       let streamSeconds = 0;
       try {
         const res = await fetch(tsUrl);
-        if (!res.ok) { setIsStreamOnline(false); return; }
+        if (!res.ok) return; // stream offline — just skip safety toast scheduling
         const data = await res.json();
         streamSeconds = data.seconds ?? 0;
-        setIsStreamOnline(true);
       } catch {
-        setIsStreamOnline(false);
-        return;
+        return; // stream unreachable — HC HUD still shows, toasts fire from t=0
       }
 
       // Schedule safetyerr toasts based on stream position
