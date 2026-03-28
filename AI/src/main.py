@@ -40,6 +40,7 @@ from gpt_vision import GptVisionInspector
 from server import broadcaster, get_sop, wait_for_sop
 from sop_tracker import SOPTracker
 from video_source import is_live_stream, parse_video_source
+from webcam_streamer import WebcamHLSStreamer
 from yolo_detector import YoloObjectDetector, draw_detections, format_detections
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -118,11 +119,13 @@ class PipelineWorker:
         {"type": "end"}
     """
 
-    def __init__(self, source: str, result_queue: queue.Queue, config: dict):
+    def __init__(self, source: str, result_queue: queue.Queue, config: dict,
+                 webcam_streamer: WebcamHLSStreamer = None):
         self.source       = source
         self.result_queue = result_queue
         self._stop        = threading.Event()
         self.config       = config
+        self.webcam_streamer = webcam_streamer
 
         # Detectors
         self.yolo = YoloObjectDetector(
@@ -171,13 +174,18 @@ class PipelineWorker:
     # ── VIDEO LOOP ────────────────────────────────────────────────────────────
 
     def _video_loop(self):
+        # ── Webcam-streamer mode: read frames from the shared streamer ────
+        if self.webcam_streamer is not None:
+            self._video_loop_from_streamer()
+            return
+
+        # ── Legacy mode: open source via VideoCapture (HLS/RTSP/file) ─────
         parsed = parse_video_source(self.source)
         live = is_live_stream(parsed)
 
         def _open_cap():
             c = cv2.VideoCapture(parsed)
             if live:
-                # Minimise buffering so we process close-to-live frames
                 c.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             return c
 
@@ -201,17 +209,78 @@ class PipelineWorker:
             ret, frame = cap.read()
             if not ret:
                 if isinstance(parsed, int):
-                    # Webcam disconnected — stop
                     break
                 if live:
-                    # HLS/RTSP glitch — reconnect and keep running
                     print("[WARN] Stream read failed, reconnecting …")
                     cap.release()
                     time.sleep(1.0)
                     cap = _open_cap()
                     continue
-                # Video file — loop back to start
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                continue
+
+            display = cv2.resize(frame, (VIDEO_W, VIDEO_H))
+            now = time.time()
+            ts = now - start_t
+
+            if now - last_yolo_t >= YOLO_INTERVAL:
+                last_yolo_t = now
+                last_detections = self.yolo.detect(display.copy())
+
+            if now - last_pose_t >= POSE_INTERVAL:
+                last_pose_t = now
+                proc = display.copy()
+                last_hands = self.pose.analyze(proc, last_detections)
+
+            draw_detections(display, last_detections)
+            self.pose.draw_last_landmarks(display)
+
+            fusion = build_fusion_text(last_detections, last_hands)
+            gpt_frame = display.copy()
+            h, w = gpt_frame.shape[:2]
+            if w > 640:
+                scale = 640 / w
+                gpt_frame = cv2.resize(gpt_frame, (640, int(h * scale)))
+
+            with self._state_lock:
+                self._latest_state = {
+                    "frame": gpt_frame,
+                    "fusion": fusion,
+                    "actions": format_actions(last_hands),
+                    "timestamp": ts,
+                    "detections": last_detections,
+                }
+
+            self.result_queue.put({"type": "frame", "frame": display.copy()})
+
+            elapsed = time.perf_counter() - t0
+            sleep_t = frame_delay - elapsed
+            if sleep_t > 0:
+                time.sleep(sleep_t)
+
+        cap.release()
+        self.pose.close()
+        self.result_queue.put({"type": "end"})
+
+    # ── Webcam-streamer video loop ────────────────────────────────────────────
+
+    def _video_loop_from_streamer(self):
+        """Read frames from WebcamHLSStreamer (raw webcam, not decoded HLS)."""
+        target_fps = 30.0
+        frame_delay = 1.0 / target_fps
+
+        last_pose_t = 0.0
+        last_yolo_t = 0.0
+        last_detections = []
+        last_hands = []
+        start_t = time.time()
+
+        while not self._stop.is_set():
+            t0 = time.perf_counter()
+
+            frame = self.webcam_streamer.get_latest_frame()
+            if frame is None:
+                time.sleep(0.01)
                 continue
 
             display = cv2.resize(frame, (VIDEO_W, VIDEO_H))
@@ -243,30 +312,45 @@ class PipelineWorker:
 
             with self._state_lock:
                 self._latest_state = {
-                    "frame": gpt_frame,          # <-- use downscaled frame
+                    "frame": gpt_frame,
                     "fusion": fusion,
                     "actions": format_actions(last_hands),
                     "timestamp": ts,
                     "detections": last_detections,
-                }           
-            
-            # Push frame to GUI
+                }
+
+            # Push raw frame to GUI (live webcam, not decoded HLS)
             self.result_queue.put({"type": "frame", "frame": display.copy()})
 
-            # Real-time pacing
+            # Pace at target fps
             elapsed = time.perf_counter() - t0
             sleep_t = frame_delay - elapsed
             if sleep_t > 0:
                 time.sleep(sleep_t)
 
-        cap.release()
         self.pose.close()
         self.result_queue.put({"type": "end"})
 
     # ── GPT LOOP ──────────────────────────────────────────────────────────────
 
     def _gpt_loop(self):
-        """Runs in its own thread. Calls GPT every GPT_INTERVAL seconds."""
+        """Runs in its own thread. Waits for SOP, then calls GPT every GPT_INTERVAL."""
+        global SOP_STEPS, STEP_SAFETY_RULES
+
+        # Wait for SOP before starting GPT analysis
+        if not SOP_STEPS:
+            print("[GPT] Waiting for SOP config on POST /sop …")
+            wait_for_sop()
+            steps, safety = get_sop()
+            SOP_STEPS.clear()
+            SOP_STEPS.extend(steps)
+            STEP_SAFETY_RULES.clear()
+            STEP_SAFETY_RULES.update(safety)
+            # Re-init the tracker with the new SOP steps
+            self.tracker = SOPTracker(SOP_STEPS)
+            self.result_queue.put({"type": "sop_received", "steps": SOP_STEPS})
+            print(f"[GPT] SOP received: {len(SOP_STEPS)} steps → {SOP_STEPS}")
+
         while not self._stop.is_set():
             time.sleep(GPT_INTERVAL)
 
@@ -325,7 +409,6 @@ class PipelineWorker:
                 })
 
                 # ── SSE broadcast ──────────────────────────────────────────
-                # current_step: 1-based index of the step currently active
                 active_step_0based = (
                     self.tracker.state.blocked_on_step
                     if self.tracker.state.blocked and self.tracker.state.blocked_on_step is not None
@@ -333,11 +416,9 @@ class PipelineWorker:
                 )
                 broadcaster.push("current_step", str(active_step_0based + 1))
 
-                # safety_err: tracker-level errors (blocked / missing / out-of-order)
                 if state.alert_type in ("ERROR", "WARNING") and state.alert:
                     clean = state.alert.replace("\n", " ").strip()
                     broadcaster.push("safety_err", clean)
-                # GPT-level safety violation (e.g. "Please wear helmet")
                 elif parsed.get("safety_ok") is False and parsed.get("safety_msg"):
                     broadcaster.push("safety_err", parsed["safety_msg"])
 
@@ -353,10 +434,12 @@ class PipelineWorker:
 # ══════════════════════════════════════════════════════════════════════════════
 
 class App(tk.Tk):
-    def __init__(self, source: str, pipeline_config: dict):
+    def __init__(self, source: str, pipeline_config: dict,
+                 webcam_streamer: WebcamHLSStreamer = None):
         super().__init__()
         self.source = source
         self.pipeline_config = pipeline_config
+        self.webcam_streamer = webcam_streamer
         self.title("Manufacturing QA  •  SOP Inspector")
         self.configure(bg=DARK_BG)
         self.resizable(False, False)
@@ -591,7 +674,10 @@ class App(tk.Tk):
     # ── PIPELINE ──────────────────────────────────────────────────────────────
 
     def _start_pipeline(self):
-        self.worker = PipelineWorker(self.source, self.result_queue, self.pipeline_config)
+        self.worker = PipelineWorker(
+            self.source, self.result_queue, self.pipeline_config,
+            webcam_streamer=self.webcam_streamer,
+        )
         self.worker.start()
         self.status_lbl.config(text="● LIVE", fg=COL_OK)
 
@@ -620,6 +706,20 @@ class App(tk.Tk):
 
                 elif item["type"] == "checklist":
                     self._update_checklist(item["items"])
+
+                elif item["type"] == "sop_received":
+                    # SOP arrived — rebuild the checklist panel
+                    for row in self._checklist_rows:
+                        row["frame"].destroy()
+                    self._checklist_rows = []
+                    for i, step in enumerate(item["steps"]):
+                        row = self._make_checklist_row(
+                            self.checklist_frame, i, step, "pending")
+                        self._checklist_rows.append(row)
+                    self.progress_lbl.config(text=f"0 / {len(item['steps'])}")
+                    self.alert_lbl.config(
+                        text="SOP loaded. Monitoring…", fg=COL_OK)
+                    self.status_lbl.config(text="● ANALYSING", fg=COL_OK)
 
                 elif item["type"] == "sop_reset":
                     self._reset_scheduled = False
@@ -670,6 +770,8 @@ class App(tk.Tk):
 
     def on_close(self):
         self.worker.stop()
+        if self.webcam_streamer:
+            self.webcam_streamer.stop()
         self.destroy()
 
 
@@ -770,28 +872,42 @@ def main():
     )
     sse_thread.start()
     print("[INFO] SSE server ready")
-    print("[INFO]   POST http://localhost:8000/sop    ← send SOP config to start")
+    print("[INFO]   POST http://localhost:8000/sop    ← send SOP config")
     print("[INFO]   GET  http://localhost:8000/stream ← SSE stream")
 
-    # Block until frontend sends the SOP via POST /sop
-    print("[WAIT] Waiting for SOP config on POST /sop ...")
-    wait_for_sop()
-    global SOP_STEPS, STEP_SAFETY_RULES
-    SOP_STEPS, STEP_SAFETY_RULES = get_sop()
-    print(f"[INFO] SOP received: {len(SOP_STEPS)} steps → {SOP_STEPS}")
+    # ── Start webcam + HLS streamer immediately ──────────────────────────────
+    webcam_streamer = None
+    use_webcam = source.isdigit()  # source "0" means webcam
 
-    # Validate / log source
-    if source.isdigit():
-        print(f"[INFO] Source → webcam {source}")
-    elif is_live_stream(source):
-        print(f"[INFO] Source → HLS/RTSP stream  {source}")
+    if use_webcam:
+        cam_index = int(source)
+        stream_name = os.environ.get("STREAM_NAME", "cam")
+        webcam_streamer = WebcamHLSStreamer(
+            cam_index=cam_index,
+            stream_name=stream_name,
+        )
+        webcam_streamer.start()
+        print(f"\n{'='*60}")
+        print(f"  HLS URL: {webcam_streamer.hls_url}")
+        print(f"  RTSP URL: {webcam_streamer.rtsp_url}")
+        print(f"{'='*60}\n")
     else:
-        if not Path(source).exists():
-            print(f"[ERROR] Video file not found: {source}")
-            sys.exit(1)
-        print(f"[INFO] Source → video file  {source}")
+        # Non-webcam sources: validate
+        if is_live_stream(source):
+            print(f"[INFO] Source → HLS/RTSP stream  {source}")
+        else:
+            if not Path(source).exists():
+                print(f"[ERROR] Video file not found: {source}")
+                sys.exit(1)
+            print(f"[INFO] Source → video file  {source}")
 
-    app = App(source=source, pipeline_config=pipeline_config)
+    # ── Start Tkinter immediately (no SOP wait) ─────────────────────────────
+    # GPT analysis will wait for SOP internally in _gpt_loop()
+    print("[INFO] Starting pipeline — video streams immediately.")
+    print("[INFO] GPT analysis will begin once SOP is POSTed to /sop")
+
+    app = App(source=source, pipeline_config=pipeline_config,
+              webcam_streamer=webcam_streamer)
     app.protocol("WM_DELETE_WINDOW", app.on_close)
     app.mainloop()
 
