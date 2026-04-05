@@ -3,9 +3,9 @@ import TopTitle from '../components/TopTitle';
 import LiveFeedPopup from '../components/LiveFeedPopup';
 import ProcessList from '../components/ProcessList';
 import MainCarousel from '../components/MainCarousel';
-import AgentListening from '../components/AgentListening';
+import SearchChatbot from '../components/SearchChatbot';
 import SafetyToast from '../components/SafetyToast';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { steps as hcJsonSteps, safetyerrs as hcSafetyErrs } from '../data/hc_vid1.json';
 import { useWorkflow } from '../context/WorkflowContext';
 
@@ -36,7 +36,9 @@ const normalizeSopStep = (s) => ({
 
 export default function WorkflowHUD() {
   const { stationName } = useParams();
+  const navigate = useNavigate();
   const { configureWorkflow, triggerSafetyToast, enableAiMode } = useWorkflow();
+  const [chatbotOpen, setChatbotOpen] = useState(false);
 
   const [station, setStation] = useState(null);   // null=resolving | false=not found | object
   const [isStreamOnline, setIsStreamOnline] = useState(null); // null=checking | true | false
@@ -352,17 +354,44 @@ export default function WorkflowHUD() {
   // ── Main HUD ─────────────────────────────────────────────────────────────────
   return (
     <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
+      <button
+        onClick={() => navigate(-1)}
+        className={`fixed top-8 left-8 z-[200] w-12 h-12 rounded-full bg-white/5 border border-white/10 flex flex-col items-center justify-center hover:bg-white/10 hover:border-white/20 transition-all duration-200 group group-hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] ${chatbotOpen ? 'opacity-0 pointer-events-none' : ''}`}
+      >
+        <div className="flex flex-col items-center justify-center gap-1">
+          <span className="material-symbols-outlined text-[22px] text-white/40 group-hover:text-white transition-colors">
+            arrow_back
+          </span>
+        </div>
+      </button>
       <TopTitle />
       <LiveFeedPopup
         streamUrl={station.hls_url}
         stationName={station.name}
         timestampUrl={station.timestamp_url}
         hc={station.hc}
+        expanded={chatbotOpen}
       />
 
       <ProcessList />
       <MainCarousel />
-      <AgentListening />
+
+      {/* Search Button — bottom right */}
+      <button
+        onClick={() => setChatbotOpen(true)}
+        className={`fixed bottom-10 right-10 z-[250] flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all duration-300 group ${
+          chatbotOpen
+            ? 'opacity-0 pointer-events-none scale-90'
+            : 'bg-white/[0.04] border-white/[0.08] hover:bg-primary/10 hover:border-primary/25 hover:shadow-[0_0_30px_rgba(165,200,255,0.12)]'
+        }`}
+      >
+        <span className="material-symbols-outlined text-white/40 text-xl group-hover:text-primary transition-colors">search</span>
+        <span className="text-xs font-bold uppercase tracking-[0.15em] text-white/40 group-hover:text-primary transition-colors">Chatbot</span>
+      </button>
+
+      {/* ChatGPT-style Chatbot Panel */}
+      <SearchChatbot isOpen={chatbotOpen} onClose={() => setChatbotOpen(false)} />
+
       <SafetyToast />
     </div>
   );

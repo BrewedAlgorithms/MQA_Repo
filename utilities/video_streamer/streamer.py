@@ -22,7 +22,7 @@ import os
 import sys
 import json
 import threading
-import fcntl
+import msvcrt
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # ── Config ─────────────────────────────────────────────────────────────────────
@@ -137,7 +137,8 @@ def _acquire_lock(stream_name: str) -> object:
     lock_path = os.path.join(_SCRIPT_DIR, f".streamer-{stream_name}.lock")
     fh = open(lock_path, "w")
     try:
-        fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        # Windows-specific non-blocking file lock
+        msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
     except OSError:
         fh.close()
         print(f"[ERROR] A streamer is already publishing to path '{stream_name}'.")
@@ -150,7 +151,9 @@ def _acquire_lock(stream_name: str) -> object:
 
 def _release_lock(fh, lock_path: str) -> None:
     try:
-        fcntl.flock(fh, fcntl.LOCK_UN)
+        # Windows-specific unlock
+        fh.seek(0)
+        msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
         fh.close()
         os.unlink(lock_path)
     except Exception:
@@ -160,6 +163,11 @@ def _release_lock(fh, lock_path: str) -> None:
 # ── Video file helpers ─────────────────────────────────────────────────────────
 def get_video_duration(path: str) -> float:
     try:
+        # Ensure we don't accidentally display a command window popup on Windows
+        creationflags = 0
+        if sys.platform == "win32":
+            creationflags = subprocess.CREATE_NO_WINDOW
+            
         result = subprocess.run(
             [
                 "ffprobe", "-v", "error",
@@ -168,6 +176,7 @@ def get_video_duration(path: str) -> float:
                 path,
             ],
             capture_output=True, text=True, timeout=10,
+            creationflags=creationflags
         )
         return float(result.stdout.strip())
     except Exception:
@@ -225,9 +234,15 @@ def stream_file(video_path: str, rtsp_url: str, stream_name: str,
     ).start()
 
     while True:
-        proc = subprocess.Popen(cmd)
         try:
+            proc = subprocess.Popen(cmd)
             proc.wait()
+        except FileNotFoundError:
+            print("\n[ERROR] 'ffmpeg' is not recognized.")
+            print("Please install FFmpeg for Windows and add it to your system PATH.")
+            print("Download: https://github.com/BtbN/FFmpeg-Builds/releases")
+            stop.set()
+            return
         except KeyboardInterrupt:
             proc.terminate()
             proc.wait()
@@ -252,11 +267,16 @@ def stream_file(video_path: str, rtsp_url: str, stream_name: str,
 # ── Webcam helper ──────────────────────────────────────────────────────────────
 def open_webcam(index: int, timeout: float = 10.0) -> cv2.VideoCapture:
     print(f"[INFO] Opening webcam {index}…")
-    print("[INFO] macOS: if a permission dialog appears, click OK then wait a moment.")
+    print("[INFO] Windows: Make sure no other apps (e.g. Teams/Zoom) are using your webcam.")
     deadline = time.time() + timeout
     cap = None
     while time.time() < deadline:
-        cap = cv2.VideoCapture(index)
+        # cv2.CAP_DSHOW can sometimes load webcams faster on Windows
+        cap = cv2.VideoCapture(index, cv2.CAP_DSHOW)
+        if not cap.isOpened():
+             # Fallback to default if DirectShow fails
+             cap = cv2.VideoCapture(index)
+             
         if cap.isOpened():
             # Minimize internal frame buffer so we always read the freshest frame
             cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
@@ -352,7 +372,16 @@ def stream_webcam(capture: cv2.VideoCapture, rtsp_url: str, stream_name: str,
     frame_count    = 0
 
     while True:
-        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+        try:
+            proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+        except FileNotFoundError:
+            print("\n[ERROR] 'ffmpeg' is not recognized.")
+            print("Please install FFmpeg for Windows and add it to your system PATH.")
+            print("Download: https://github.com/BtbN/FFmpeg-Builds/releases")
+            _cap_stop.set()
+            capture.release()
+            return
+
         pipe_broken = False
 
         try:
@@ -439,8 +468,8 @@ def main():
             capture = open_webcam(source)
             if not capture or not capture.isOpened():
                 print(f"[ERROR] Could not open webcam index {source}")
-                print("[HINT] Go to System Settings → Privacy & Security → Camera")
-                print("       and grant camera access to Terminal (or your Python app).")
+                print("[HINT] Check Windows Settings → Privacy & Security → Camera")
+                print("       and ensure apps have permission to access your camera.")
                 sys.exit(1)
             stream_webcam(capture, rtsp_url, stream_name, timestamp_port=bound_port)
     finally:

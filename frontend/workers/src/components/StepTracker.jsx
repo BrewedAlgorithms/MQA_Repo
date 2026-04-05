@@ -5,7 +5,10 @@ export default function StepTracker() {
   const { currentStepId, workflowSteps, isWorkflowCompleted } = useWorkflow();
 
   return (
-    <div className="mt-12 flex flex-col items-center gap-4">
+    <div 
+      className="mt-12 flex flex-col items-center gap-4 transition-transform duration-500"
+      style={{ transform: currentStepId > 1 ? 'translateX(8rem)' : 'none' }}
+    >
       <div className="flex items-center gap-3">
         {workflowSteps.map(step => {
           const isCompleted = step.id < currentStepId || (step.id === currentStepId && isWorkflowCompleted);

@@ -37,12 +37,15 @@ export default function MainCarousel() {
   return (
     <main className="flex-grow flex flex-col items-center justify-center relative px-4 mt-20">
       {/* Carousel Container */}
-      <div className="relative w-full max-w-6xl flex items-center justify-center gap-0 md:gap-8 h-[550px]">
+      <div 
+        className="relative w-full max-w-6xl flex items-center justify-center gap-0 md:gap-10 h-[480px] transition-transform duration-500"
+        style={{ transform: prevStepData ? 'translateX(8rem)' : 'none' }}
+      >
         
 
         {/* Left Card (Previous) */}
         {prevStepData ? (
-          <div key={`prev-${currentStepId}`} className="animate-slide-fade hidden md:flex flex-col shrink-0 w-64 h-80 bg-surface-container-low rounded-xl opacity-30 -translate-x-8 scale-90 p-6 relative overflow-hidden border-2 border-emerald-500/50">
+          <div key={`prev-${currentStepId}`} className="animate-slide-fade hidden md:flex flex-col shrink-0 w-60 h-80 bg-surface-container-low rounded-xl opacity-30 -translate-x-8 scale-90 p-6 relative overflow-hidden border-2 border-emerald-500/50">
             <div className="flex justify-between items-start mb-4">
               <span className="text-xs font-bold uppercase tracking-widest text-emerald-400">Step {prevStepData.id}</span>
               <span className="material-symbols-outlined text-emerald-400" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
@@ -54,11 +57,11 @@ export default function MainCarousel() {
             <div className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">Completed</div>
           </div>
         ) : (
-          <div className="hidden md:block shrink-0 w-64 h-80 opacity-0 -translate-x-8 scale-90"></div>
+          <div className="hidden md:block shrink-0 w-60 h-80 opacity-0 -translate-x-8 scale-90"></div>
         )}
 
         {/* Center Card (Active) */}
-        <div key={`active-${currentStepId}`} className={`animate-slide-fade z-20 w-full max-w-lg md:w-[520px] h-full bg-surface-container-high rounded-xl p-8 flex flex-col border-2 relative overflow-hidden ${isWorkflowCompleted ? 'border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)]' : 'card-glow-active border-primary/40'}`}>
+        <div key={`active-${currentStepId}`} className={`animate-slide-fade z-20 w-full max-w-lg md:w-[420px] h-full bg-surface-container-high rounded-xl p-8 flex flex-col border-2 relative overflow-hidden ${isWorkflowCompleted ? 'border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.2)]' : 'card-glow-active border-primary/40'}`}>
           <div className="absolute top-0 left-0 w-full h-1.5 bg-surface-container-lowest">
             <div 
               className={`h-full transition-all duration-500 ${isWorkflowCompleted ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' : 'bg-primary shadow-[0_0_12px_rgba(165,200,255,0.5)]'}`} 
@@ -125,7 +128,7 @@ export default function MainCarousel() {
 
         {/* Right Card (Next) */}
         {nextStepData ? (
-          <div key={`next-${currentStepId}`} className="animate-slide-fade hidden md:flex flex-col shrink-0 w-64 h-80 bg-surface-container-low rounded-xl opacity-30 translate-x-8 scale-90 p-6 relative overflow-hidden border border-white/5">
+          <div key={`next-${currentStepId}`} className="animate-slide-fade hidden md:flex flex-col shrink-0 w-60 h-80 bg-surface-container-low rounded-xl opacity-30 translate-x-8 scale-90 p-6 relative overflow-hidden border border-white/5">
             <div className="flex justify-between items-start mb-4">
               <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Step {nextStepData.id}</span>
               <span className="material-symbols-outlined text-on-surface-variant">lock</span>
@@ -137,7 +140,7 @@ export default function MainCarousel() {
             <div className="text-on-surface-variant/40 text-sm font-bold uppercase tracking-wider">Locked</div>
           </div>
         ) : (
-          <div className="hidden md:block shrink-0 w-64 h-80 opacity-0 translate-x-8 scale-90"></div>
+          <div className="hidden md:block shrink-0 w-60 h-80 opacity-0 translate-x-8 scale-90"></div>
         )}
 
 

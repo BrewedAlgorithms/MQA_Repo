@@ -62,7 +62,7 @@ app = FastAPI(
     description=_DESCRIPTION,
     openapi_tags=_TAGS,
     contact={
-        "name": "Titanium Forge — MQA Team",
+        "name": "tata Motors — MQA Team",
     },
     license_info={
         "name": "Proprietary",

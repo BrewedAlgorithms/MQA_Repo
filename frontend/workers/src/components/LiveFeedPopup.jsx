@@ -8,7 +8,7 @@ const HLS_LAG_SECONDS = 3;
 
 const RETRY_INTERVAL_MS = 5000;
 
-export default function LiveFeedPopup({ streamUrl, stationName, timestampUrl, hc = false }) {
+export default function LiveFeedPopup({ streamUrl, stationName, timestampUrl, hc = false, expanded = false }) {
   const STREAM_URL = streamUrl;
   const TIMESTAMP_URL = timestampUrl;
   const { currentStepId, setCurrentStepId, workflowSteps, setIsWorkflowCompleted } = useWorkflow();
@@ -133,7 +133,11 @@ export default function LiveFeedPopup({ streamUrl, stationName, timestampUrl, hc
   }, [hc, TIMESTAMP_URL, workflowSteps, currentStepId, setCurrentStepId, setIsWorkflowCompleted]);
 
   return (
-    <div className="fixed top-8 left-8 z-50 w-72 h-48 bg-surface-container-high rounded-xl border border-white/10 overflow-hidden shadow-2xl group">
+    <div className={`fixed z-50 bg-surface-container-high rounded-xl border border-white/10 overflow-hidden shadow-2xl group transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+      expanded
+        ? 'top-4 right-4 w-[calc(50vw-2rem)] h-[45vh] shadow-[0_0_60px_rgba(0,0,0,0.5)]'
+        : 'top-8 left-8 w-72 h-48'
+    }`}>
 
       {/* HLS stream via hls.js */}
       {streamError ? (

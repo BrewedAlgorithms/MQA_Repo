@@ -4,7 +4,7 @@ export default function Sidebar({ currentScreen, setCurrentScreen }) {
   return (
     <aside className="fixed left-0 top-0 h-full w-64 z-40 bg-[#131313] border-r border-[#20201f] flex flex-col pt-10 pb-6 px-0 font-['Inter'] text-sm uppercase tracking-widest">
       <div className="px-6 mb-10">
-        <h1 className="text-xl font-bold tracking-tighter text-[#8bacff] font-['Space_Grotesk']">TITANIUM FORGE</h1>
+        <h1 className="text-xl font-bold tracking-tighter text-[#8bacff] font-['Space_Grotesk']">TATA MOTORS</h1>
         <p className="font-['Inter'] font-medium text-[10px] tracking-widest uppercase opacity-60 text-zinc-400 mt-1">v4.2.0-STABLE</p>
       </div>
 
