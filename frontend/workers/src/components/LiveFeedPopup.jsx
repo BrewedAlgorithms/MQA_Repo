@@ -136,7 +136,7 @@ export default function LiveFeedPopup({ streamUrl, stationName, timestampUrl, hc
     <div className={`fixed z-50 bg-surface-container-high rounded-xl border border-white/10 overflow-hidden shadow-2xl group transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
       expanded
         ? 'top-4 right-4 w-[calc(50vw-2rem)] h-[45vh] shadow-[0_0_60px_rgba(0,0,0,0.5)]'
-        : 'top-8 left-8 w-72 h-48'
+        : 'top-24 left-8 w-72 h-48'
     }`}>
 
       {/* HLS stream via hls.js */}

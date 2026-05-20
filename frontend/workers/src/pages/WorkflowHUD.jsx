@@ -379,14 +379,15 @@ export default function WorkflowHUD() {
       {/* Search Button — bottom right */}
       <button
         onClick={() => setChatbotOpen(true)}
-        className={`fixed bottom-10 right-10 z-[250] flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all duration-300 group ${
+        className={`fixed bottom-4 right-4 z-[250] flex items-center justify-center w-14 h-14 rounded-full border transition-all duration-300 group ${
           chatbotOpen
             ? 'opacity-0 pointer-events-none scale-90'
-            : 'bg-white/[0.04] border-white/[0.08] hover:bg-primary/10 hover:border-primary/25 hover:shadow-[0_0_30px_rgba(165,200,255,0.12)]'
+            : 'bg-gradient-to-br from-primary/30 to-primary-container/40 border-primary/30 hover:border-primary/60 hover:from-primary/40 hover:to-primary-container/50 hover:shadow-[0_0_30px_rgba(165,200,255,0.25)] hover:scale-105 active:scale-95'
         }`}
+        title="Open SOP Assistant"
       >
-        <span className="material-symbols-outlined text-white/40 text-xl group-hover:text-primary transition-colors">search</span>
-        <span className="text-xs font-bold uppercase tracking-[0.15em] text-white/40 group-hover:text-primary transition-colors">Chatbot</span>
+        <span className="absolute inset-0 rounded-full bg-primary/15 animate-ping opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
+        <span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform relative z-10" style={{ fontVariationSettings: "'FILL' 1" }}>smart_toy</span>
       </button>
 
       {/* ChatGPT-style Chatbot Panel */}

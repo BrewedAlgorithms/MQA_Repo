@@ -145,14 +145,14 @@ export default function SearchChatbot({ isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-y-0 left-0 z-[300] flex flex-col"
+      className="fixed inset-y-0 left-0 z-[300] flex flex-col border-r border-white/10"
       style={{
         width: '50vw',
         animation: 'chatbot-slide-in 0.3s ease-out forwards',
       }}
     >
-      {/* Solid background — no backdrop-blur to avoid GPU lag */}
-      <div className="absolute inset-0 bg-[#0a0a0a]" />
+      {/* Backdrop blur glassmorphic background */}
+      <div className="absolute inset-0 bg-[#0a0a0ad8] backdrop-blur-md" />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col h-full">
@@ -195,8 +195,8 @@ export default function SearchChatbot({ isOpen, onClose }) {
               )}
               <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
                 msg.type === 'user'
-                  ? 'bg-primary/20 border border-primary/20 text-white rounded-br-md'
-                  : 'bg-white/[0.04] border border-white/[0.06] text-white/70 rounded-bl-md'
+                  ? 'bg-gradient-to-br from-primary/25 to-primary-container/20 border border-primary/30 text-white rounded-br-md shadow-[0_4px_16px_rgba(165,200,255,0.06)]'
+                  : 'bg-white/[0.04] border border-white/[0.06] text-white/80 rounded-bl-md shadow-[0_4px_16px_rgba(0,0,0,0.15)]'
               }`}>
                 {renderContent(msg.content)}
               </div>
