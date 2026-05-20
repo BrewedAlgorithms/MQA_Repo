@@ -5,7 +5,7 @@ export default function ProcessList() {
   const { currentStepId, workflowSteps, isWorkflowCompleted } = useWorkflow();
 
   return (
-    <div className="fixed bottom-10 left-10 z-50 flex flex-col gap-3 p-2">
+    <div className="fixed bottom-10 left-6 z-50 flex flex-col gap-3 p-2 max-h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin pr-3">
       {workflowSteps.map(step => {
         const isCompleted = step.id < currentStepId || (step.id === currentStepId && isWorkflowCompleted);
         const isActive = step.id === currentStepId && !isWorkflowCompleted;

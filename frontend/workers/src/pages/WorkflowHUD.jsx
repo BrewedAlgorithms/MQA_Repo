@@ -356,10 +356,10 @@ export default function WorkflowHUD() {
     <div className="bg-[#0e0e0e] text-on-surface font-body antialiased min-h-screen flex flex-col overflow-x-hidden select-none relative">
       <button
         onClick={() => navigate(-1)}
-        className={`fixed top-8 left-8 z-[200] w-12 h-12 rounded-full bg-white/5 border border-white/10 flex flex-col items-center justify-center hover:bg-white/10 hover:border-white/20 transition-all duration-200 group group-hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] ${chatbotOpen ? 'opacity-0 pointer-events-none' : ''}`}
+        className={`fixed top-4 left-6 z-[200] w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex flex-col items-center justify-center hover:bg-white/10 hover:border-white/20 transition-all duration-200 group group-hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] ${chatbotOpen ? 'opacity-0 pointer-events-none' : ''}`}
       >
         <div className="flex flex-col items-center justify-center gap-1">
-          <span className="material-symbols-outlined text-[22px] text-white/40 group-hover:text-white transition-colors">
+          <span className="material-symbols-outlined text-lg text-white/40 group-hover:text-white transition-colors">
             arrow_back
           </span>
         </div>
